@@ -8,12 +8,28 @@
  * @module
  */
 
-import type * as todos from "../todos.js";
+import type * as ai from "../ai.js";
+import type * as auth from "../auth.js";
+import type * as chat from "../chat.js";
+import type * as documents from "../documents.js";
+import type * as folders from "../folders.js";
+import type * as http from "../http.js";
+import type * as tags from "../tags.js";
 
-import type { ApiFromModules, FilterApi, FunctionReference } from "convex/server";
+import type {
+  ApiFromModules,
+  FilterApi,
+  FunctionReference,
+} from "convex/server";
 
 declare const fullApi: ApiFromModules<{
-  todos: typeof todos;
+  ai: typeof ai;
+  auth: typeof auth;
+  chat: typeof chat;
+  documents: typeof documents;
+  folders: typeof folders;
+  http: typeof http;
+  tags: typeof tags;
 }>;
 
 /**
@@ -24,7 +40,10 @@ declare const fullApi: ApiFromModules<{
  * const myFunctionReference = api.myModule.myFunction;
  * ```
  */
-export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "public">>;
+export declare const api: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "public">
+>;
 
 /**
  * A utility for referencing Convex functions in your app's internal API.
@@ -34,6 +53,9 @@ export declare const api: FilterApi<typeof fullApi, FunctionReference<any, "publ
  * const myFunctionReference = internal.myModule.myFunction;
  * ```
  */
-export declare const internal: FilterApi<typeof fullApi, FunctionReference<any, "internal">>;
+export declare const internal: FilterApi<
+  typeof fullApi,
+  FunctionReference<any, "internal">
+>;
 
 export declare const components: {};

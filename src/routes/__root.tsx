@@ -1,6 +1,7 @@
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
+import { HeadContent, Outlet, Scripts, createRootRoute } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { TooltipProvider } from "#/components/ui/tooltip";
 
 import ConvexProvider from "../integrations/convex/provider";
 
@@ -17,7 +18,11 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "Memoria - Your Knowledge Base",
+      },
+      {
+        name: "theme-color",
+        content: "#0e0e12",
       },
     ],
     links: [
@@ -25,12 +30,21 @@ export const Route = createRootRoute({
         rel: "stylesheet",
         href: appCss,
       },
+      {
+        rel: "icon",
+        type: "image/svg+xml",
+        href: "/favicon.svg",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/apple-touch-icon.svg",
+      },
     ],
   }),
-  shellComponent: RootDocument,
+  component: RootDocument,
 });
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument() {
   return (
     <html lang="en">
       <head>
@@ -38,7 +52,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ConvexProvider>
-          {children}
+          <TooltipProvider>
+            <Outlet />
+          </TooltipProvider>
           <TanStackDevtools
             config={{
               position: "bottom-right",

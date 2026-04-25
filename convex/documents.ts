@@ -1,0 +1,276 @@
+import { v } from "convex/values";
+import { query, mutation } from "./_generated/server";
+import { Id } from "./_generated/dataModel";
+
+export const list = query({
+  args: {
+    folderId: v.optional(v.id("folders")),
+    tagId: v.optional(v.id("tags")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const userId = identity.tokenIdentifier;
+
+    let documents;
+    if (args.folderId) {
+      documents = await ctx.db
+        .query("documents")
+        .withIndex("by_folderId", (q) => q.eq("folderId", args.folderId))
+        .collect();
+      documents = documents.filter((d) => d.userId === userId);
+    } else {
+      documents = await ctx.db
+        .query("documents")
+        .withIndex("by_userId", (q) => q.eq("userId", userId))
+        .order("desc")
+        .collect();
+    }
+
+    if (args.tagId) {
+      const tagId = args.tagId;
+      const docTagRelations = await ctx.db
+        .query("documentTags")
+        .withIndex("by_tagId", (q) => q.eq("tagId", tagId))
+        .collect();
+      const docIds = new Set(docTagRelations.map((dt) => dt.documentId));
+      documents = documents.filter((d) => docIds.has(d._id));
+    }
+
+    const documentsWithTags = await Promise.all(
+      documents.map(async (doc) => {
+        const docTags = await ctx.db
+          .query("documentTags")
+          .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
+          .collect();
+        const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
+        return {
+          ...doc,
+          tags: tags.filter(Boolean).map((t) => t!.name),
+        };
+      }),
+    );
+
+    return documentsWithTags;
+  },
+});
+
+export const get = query({
+  args: { id: v.id("documents") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    const doc = await ctx.db.get(args.id);
+    if (!doc) return null;
+
+    // Allow access if public folder or owner
+    if (doc.folderId) {
+      const folder = await ctx.db.get(doc.folderId);
+      if (folder?.isPublic) {
+        const docTags = await ctx.db
+          .query("documentTags")
+          .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
+          .collect();
+        const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
+        return {
+          ...doc,
+          tags: tags.filter(Boolean).map((t) => t!.name),
+          folder,
+        };
+      }
+    }
+
+    if (!identity || doc.userId !== identity.tokenIdentifier) return null;
+
+    const docTags = await ctx.db
+      .query("documentTags")
+      .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
+      .collect();
+    const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
+    const folder = doc.folderId ? await ctx.db.get(doc.folderId) : null;
+
+    return {
+      ...doc,
+      tags: tags.filter(Boolean).map((t) => t!.name),
+      folder,
+    };
+  },
+});
+
+export const create = mutation({
+  args: {
+    type: v.union(v.literal("web"), v.literal("pdf"), v.literal("note")),
+    title: v.string(),
+    content: v.string(),
+    source: v.optional(v.string()),
+    folderId: v.optional(v.id("folders")),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
+
+    const documentId = await ctx.db.insert("documents", {
+      type: args.type,
+      title: args.title,
+      content: args.content,
+      source: args.source,
+      excerpt,
+      folderId: args.folderId,
+      userId: identity.tokenIdentifier,
+    });
+
+    return documentId;
+  },
+});
+
+export const update = mutation({
+  args: {
+    id: v.id("documents"),
+    title: v.optional(v.string()),
+    content: v.optional(v.string()),
+    folderId: v.optional(v.id("folders")),
+    summary: v.optional(v.string()),
+    summaryType: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== identity.tokenIdentifier) {
+      throw new Error("Document not found");
+    }
+
+    const updates: Record<string, unknown> = {};
+    if (args.title !== undefined) updates.title = args.title;
+    if (args.content !== undefined) {
+      updates.content = args.content;
+      updates.excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
+    }
+    if (args.folderId !== undefined) updates.folderId = args.folderId;
+    if (args.summary !== undefined) updates.summary = args.summary;
+    if (args.summaryType !== undefined) updates.summaryType = args.summaryType;
+
+    await ctx.db.patch(args.id, updates);
+    return args.id;
+  },
+});
+
+export const remove = mutation({
+  args: { id: v.id("documents") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== identity.tokenIdentifier) {
+      throw new Error("Document not found");
+    }
+
+    // Delete associated tags
+    const docTags = await ctx.db
+      .query("documentTags")
+      .withIndex("by_documentId", (q) => q.eq("documentId", args.id))
+      .collect();
+    for (const dt of docTags) {
+      await ctx.db.delete(dt._id);
+    }
+
+    // Delete chat messages
+    const messages = await ctx.db
+      .query("chatMessages")
+      .withIndex("by_documentId", (q) => q.eq("documentId", args.id))
+      .collect();
+    for (const msg of messages) {
+      await ctx.db.delete(msg._id);
+    }
+
+    await ctx.db.delete(args.id);
+  },
+});
+
+export const search = query({
+  args: { query: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const userId = identity.tokenIdentifier;
+
+    const titleResults = await ctx.db
+      .query("documents")
+      .withSearchIndex("search_title", (q) => q.search("title", args.query).eq("userId", userId))
+      .take(10);
+
+    const contentResults = await ctx.db
+      .query("documents")
+      .withSearchIndex("search_content", (q) =>
+        q.search("content", args.query).eq("userId", userId),
+      )
+      .take(10);
+
+    // Merge and deduplicate
+    const seen = new Set<string>();
+    const results: typeof titleResults = [];
+    for (const doc of [...titleResults, ...contentResults]) {
+      if (!seen.has(doc._id)) {
+        seen.add(doc._id);
+        results.push(doc);
+      }
+    }
+
+    return results.slice(0, 15);
+  },
+});
+
+export const addTags = mutation({
+  args: {
+    documentId: v.id("documents"),
+    tags: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc || doc.userId !== identity.tokenIdentifier) {
+      throw new Error("Document not found");
+    }
+
+    for (const tagName of args.tags) {
+      // Find or create tag
+      let tag = await ctx.db
+        .query("tags")
+        .withIndex("by_name_and_userId", (q) =>
+          q.eq("name", tagName).eq("userId", identity.tokenIdentifier),
+        )
+        .unique();
+
+      if (!tag) {
+        const tagId = await ctx.db.insert("tags", {
+          name: tagName,
+          userId: identity.tokenIdentifier,
+        });
+        tag = await ctx.db.get(tagId);
+      }
+
+      if (tag) {
+        // Check if relation already exists
+        const existing = await ctx.db
+          .query("documentTags")
+          .withIndex("by_documentId", (q) => q.eq("documentId", args.documentId))
+          .filter((q) => q.eq(q.field("tagId"), tag!._id))
+          .unique();
+
+        if (!existing) {
+          await ctx.db.insert("documentTags", {
+            documentId: args.documentId,
+            tagId: tag._id,
+          });
+        }
+      }
+    }
+  },
+});
