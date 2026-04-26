@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select";
-import { Link, FileText, Edit3, Loader2, X } from "lucide-react";
+import { Link, FileText, Edit3, Loader2 } from "lucide-react";
 
 interface CreateModalProps {
   open: boolean;
@@ -185,12 +185,12 @@ export function CreateModal({ open, onClose }: CreateModalProps) {
                 rows={5}
                 className="bg-secondary/50 resize-none"
               />
-              <Select value={folderId} onValueChange={setFolderId}>
+              <Select value={folderId || "none"} onValueChange={(v) => setFolderId(v === "none" ? "" : v)}>
                 <SelectTrigger className="bg-secondary/50">
                   <SelectValue placeholder="No folder" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">No folder</SelectItem>
+                  <SelectItem value="none">No folder</SelectItem>
                   {folders.map((f) => (
                     <SelectItem key={f._id} value={f._id}>
                       {f.name}
