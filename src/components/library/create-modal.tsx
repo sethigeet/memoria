@@ -1,12 +1,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api, type Id } from "#/lib/convex";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "#/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "#/components/ui/dialog";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Textarea } from "#/components/ui/textarea";
@@ -34,11 +29,7 @@ interface CreateModalProps {
 
 type TabType = "url" | "pdf" | "note";
 
-export function CreateModal({
-  open,
-  onClose,
-  initialFolderId,
-}: CreateModalProps) {
+export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps) {
   const [tab, setTab] = useState<TabType>("note");
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
@@ -90,8 +81,7 @@ export function CreateModal({
 
       if (tab === "url" && url) {
         docType = "web";
-        docSource = new URL(url.startsWith("http") ? url : `https://${url}`)
-          .hostname;
+        docSource = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
         docContent = `Content from ${url}\n\n[Note: URL scraping would happen here in production]`;
         docTitle = docTitle || url;
       } else if (tab === "pdf") {
@@ -137,11 +127,7 @@ export function CreateModal({
   };
 
   const canCreate =
-    tab === "url"
-      ? url.trim()
-      : tab === "note"
-        ? title.trim() || content.trim()
-        : false;
+    tab === "url" ? url.trim() : tab === "note" ? title.trim() || content.trim() : false;
 
   const tabs: { id: TabType; icon: typeof Link; label: string }[] = [
     { id: "url", icon: Link, label: "URL" },
@@ -153,9 +139,7 @@ export function CreateModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-[500px] p-0 gap-0 bg-card">
         <DialogHeader className="px-5 pt-5 pb-3.5">
-          <DialogTitle className="text-[16px] font-bold tracking-tight">
-            Add to Library
-          </DialogTitle>
+          <DialogTitle className="text-[16px] font-bold tracking-tight">Add to Library</DialogTitle>
         </DialogHeader>
 
         {/* Tabs */}
@@ -275,14 +259,8 @@ export function CreateModal({
               Cancel
             </Button>
             <Button onClick={handleCreate} disabled={!canCreate || processing}>
-              {processing && (
-                <Loader2 className="mr-2 w-3.5 h-3.5 animate-spin" />
-              )}
-              {tab === "url"
-                ? "Import URL"
-                : tab === "pdf"
-                  ? "Upload PDF"
-                  : "Create Note"}
+              {processing && <Loader2 className="mr-2 w-3.5 h-3.5 animate-spin" />}
+              {tab === "url" ? "Import URL" : tab === "pdf" ? "Upload PDF" : "Create Note"}
             </Button>
           </div>
         </div>

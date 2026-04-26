@@ -81,6 +81,10 @@ export const Route = createRootRoute({
         content: "width=device-width, initial-scale=1",
       },
       {
+        name: "apple-mobile-web-app-title",
+        content: "Memoria",
+      },
+      {
         title: "Memoria - Your Knowledge Base",
       },
       {
@@ -95,12 +99,26 @@ export const Route = createRootRoute({
       },
       {
         rel: "icon",
+        type: "image/png",
+        href: "/favicon-96x96.png",
+      },
+      {
+        rel: "icon",
         type: "image/svg+xml",
         href: "/favicon.svg",
       },
       {
+        rel: "icon",
+        href: "/favicon.ico",
+      },
+      {
         rel: "apple-touch-icon",
-        href: "/apple-touch-icon.svg",
+        sizes: "180x180",
+        href: "/apple-touch-icon.png",
+      },
+      {
+        rel: "manifest",
+        href: "/site.webmanifest",
       },
     ],
   }),

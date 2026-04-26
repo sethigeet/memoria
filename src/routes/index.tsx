@@ -46,7 +46,6 @@ function AppLayout() {
     setCreateInFolder(undefined);
   };
 
-
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setActiveDocument(null);

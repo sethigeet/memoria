@@ -2,6 +2,7 @@ import { createFileRoute, useParams } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api, type Id } from "#/lib/convex";
 import { NoteCard } from "#/components/library/note-card";
+import { Logo } from "#/components/ui/logo";
 
 export const Route = createFileRoute("/shared/$folderId")({
   component: PublicFolderView,
@@ -42,26 +43,7 @@ function PublicFolderView() {
         <div className="max-w-5xl mx-auto px-6 py-5">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-8 h-8 rounded-lg bg-[#0e0e12] border border-border flex items-center justify-center">
-              <svg viewBox="0 0 32 32" className="w-5 h-5">
-                <defs>
-                  <linearGradient id="sharedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style={{ stopColor: "#4da6ff" }} />
-                    <stop offset="100%" style={{ stopColor: "#7c3aed" }} />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M7 24 L7 10 Q7 8 9 8 L11 8 L11 24 Q11 25 10 25 L8 25 Q7 25 7 24Z"
-                  fill="url(#sharedGrad)"
-                />
-                <path d="M11 11 L16 18 L21 11 L21 13 L16 21 L11 13Z" fill="url(#sharedGrad)" />
-                <path
-                  d="M21 8 L23 8 Q25 8 25 10 L25 24 Q25 25 24 25 L22 25 Q21 25 21 24 L21 8Z"
-                  fill="url(#sharedGrad)"
-                />
-                <circle cx="10" cy="5" r="1.5" fill="#4da6ff" opacity="0.8" />
-                <circle cx="16" cy="4" r="1" fill="#7c3aed" opacity="0.7" />
-                <circle cx="22" cy="5" r="1.5" fill="#4da6ff" opacity="0.8" />
-              </svg>
+              <Logo size={20} />
             </div>
             <span className="font-bold text-lg">Memoria</span>
           </div>
@@ -76,17 +58,9 @@ function PublicFolderView() {
       <main className="max-w-5xl mx-auto px-6 py-8">
         {documents.length === 0 ? (
           <div className="text-center py-20">
-            <svg viewBox="0 0 32 32" className="w-12 h-12 mx-auto mb-4 opacity-30">
-              <path
-                d="M7 24 L7 10 Q7 8 9 8 L11 8 L11 24 Q11 25 10 25 L8 25 Q7 25 7 24Z"
-                fill="currentColor"
-              />
-              <path d="M11 11 L16 18 L21 11 L21 13 L16 21 L11 13Z" fill="currentColor" />
-              <path
-                d="M21 8 L23 8 Q25 8 25 10 L25 24 Q25 25 24 25 L22 25 Q21 25 21 24 L21 8Z"
-                fill="currentColor"
-              />
-            </svg>
+            <div className="w-12 h-12 mx-auto mb-4 opacity-30">
+              <Logo size={48} />
+            </div>
             <p className="text-muted-foreground">This folder is empty.</p>
           </div>
         ) : (

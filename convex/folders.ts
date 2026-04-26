@@ -23,7 +23,7 @@ export const list = query({
           .collect();
         const count = docs.filter((d) => !d.deletedAt).length;
         return { ...folder, documentCount: count };
-      })
+      }),
     );
 
     return foldersWithCounts;
@@ -70,17 +70,19 @@ export const getPublicDocuments = query({
       .collect();
 
     const documentsWithTags = await Promise.all(
-      documents.filter((d) => !d.deletedAt).map(async (doc) => {
-        const docTags = await ctx.db
-          .query("documentTags")
-          .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
-          .collect();
-        const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
-        return {
-          ...doc,
-          tags: tags.filter(Boolean).map((t) => t!.name),
-        };
-      }),
+      documents
+        .filter((d) => !d.deletedAt)
+        .map(async (doc) => {
+          const docTags = await ctx.db
+            .query("documentTags")
+            .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
+            .collect();
+          const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
+          return {
+            ...doc,
+            tags: tags.filter(Boolean).map((t) => t!.name),
+          };
+        }),
     );
 
     return documentsWithTags;

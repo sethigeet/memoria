@@ -265,7 +265,7 @@ export const search = query({
           ...doc,
           tags: tags.filter(Boolean).map((t) => t!.name),
         };
-      })
+      }),
     );
 
     return resultsWithTags;

@@ -9,9 +9,7 @@ export const cleanupExpired = internalMutation({
 
     // Find and delete expired documents
     const allDocs = await ctx.db.query("documents").collect();
-    const expiredDocs = allDocs.filter(
-      (d) => d.deletedAt && d.deletedAt < expirationThreshold
-    );
+    const expiredDocs = allDocs.filter((d) => d.deletedAt && d.deletedAt < expirationThreshold);
 
     for (const doc of expiredDocs) {
       // Delete associated tags
@@ -38,7 +36,7 @@ export const cleanupExpired = internalMutation({
     // Find and delete expired folders
     const allFolders = await ctx.db.query("folders").collect();
     const expiredFolders = allFolders.filter(
-      (f) => f.deletedAt && f.deletedAt < expirationThreshold
+      (f) => f.deletedAt && f.deletedAt < expirationThreshold,
     );
 
     for (const folder of expiredFolders) {

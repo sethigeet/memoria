@@ -65,7 +65,9 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
           {config.label}
         </span>
         <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">{formatDate(note._creationTime)}</span>
+          <span className="text-[11px] text-muted-foreground">
+            {formatDate(note._creationTime)}
+          </span>
           {hovered && (
             <button
               onClick={handleDelete}

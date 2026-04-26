@@ -5,6 +5,7 @@ import { api, type Id } from "#/lib/convex";
 import { useNavigate } from "@tanstack/react-router";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
+import { Logo } from "#/components/ui/logo";
 import { ScrollArea, ScrollBar } from "#/components/ui/scroll-area";
 import {
   ContextMenu,
@@ -90,16 +91,10 @@ export function Sidebar({
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [tagsOpen, setTagsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(
-    new Set(),
-  );
-  const [creatingFolder, setCreatingFolder] = useState<
-    Id<"folders"> | "root" | null
-  >(null);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [creatingFolder, setCreatingFolder] = useState<Id<"folders"> | "root" | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
-  const [renamingFolder, setRenamingFolder] = useState<Id<"folders"> | null>(
-    null,
-  );
+  const [renamingFolder, setRenamingFolder] = useState<Id<"folders"> | null>(null);
   const [renameValue, setRenameValue] = useState("");
   const renameInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -118,9 +113,7 @@ export function Sidebar({
 
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem("sidebar-width");
-    return saved
-      ? Math.min(Math.max(parseInt(saved), MIN_WIDTH), MAX_WIDTH)
-      : DEFAULT_WIDTH;
+    return saved ? Math.min(Math.max(parseInt(saved), MIN_WIDTH), MAX_WIDTH) : DEFAULT_WIDTH;
   });
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
@@ -289,9 +282,7 @@ export function Sidebar({
                       {folder.documentCount}
                     </span>
                   )}
-                  {folder.isPublic && (
-                    <Globe className="w-3 h-3 text-muted-foreground shrink-0" />
-                  )}
+                  {folder.isPublic && <Globe className="w-3 h-3 text-muted-foreground shrink-0" />}
                 </>
               )}
             </div>
@@ -327,9 +318,7 @@ export function Sidebar({
                       key={color}
                       onClick={() => handleChangeColor(folder._id, color)}
                       className={`w-6 h-6 rounded-md border-2 transition-transform hover:scale-110 ${
-                        folder.color === color
-                          ? "border-white"
-                          : "border-transparent"
+                        folder.color === color ? "border-white" : "border-transparent"
                       }`}
                       style={{ backgroundColor: color }}
                     />
@@ -399,46 +388,14 @@ export function Sidebar({
         {/* Logo */}
         <div className="p-4 border-b border-sidebar-border flex items-center gap-3 shrink-0">
           <div className="w-7 h-7 rounded-lg bg-[#0e0e12] border border-border flex items-center justify-center overflow-hidden">
-            <svg viewBox="0 0 32 32" className="w-5 h-5">
-              <defs>
-                <linearGradient
-                  id="logoGrad"
-                  x1="0%"
-                  y1="0%"
-                  x2="100%"
-                  y2="100%"
-                >
-                  <stop offset="0%" style={{ stopColor: "#4da6ff" }} />
-                  <stop offset="100%" style={{ stopColor: "#7c3aed" }} />
-                </linearGradient>
-              </defs>
-              <path
-                d="M7 24 L7 10 Q7 8 9 8 L11 8 L11 24 Q11 25 10 25 L8 25 Q7 25 7 24Z"
-                fill="url(#logoGrad)"
-              />
-              <path
-                d="M11 11 L16 18 L21 11 L21 13 L16 21 L11 13Z"
-                fill="url(#logoGrad)"
-              />
-              <path
-                d="M21 8 L23 8 Q25 8 25 10 L25 24 Q25 25 24 25 L22 25 Q21 25 21 24 L21 8Z"
-                fill="url(#logoGrad)"
-              />
-              <circle cx="10" cy="5" r="1.5" fill="#4da6ff" opacity="0.8" />
-              <circle cx="16" cy="4" r="1" fill="#7c3aed" opacity="0.7" />
-              <circle cx="22" cy="5" r="1.5" fill="#4da6ff" opacity="0.8" />
-            </svg>
+            <Logo size={20} />
           </div>
           <span className="font-bold text-[15px] tracking-tight">Memoria</span>
         </div>
 
         {/* New Note Button */}
         <div className="px-2.5 pt-3 pb-2">
-          <Button
-            onClick={() => onNewNote()}
-            className="w-full gap-2"
-            size="sm"
-          >
+          <Button onClick={() => onNewNote()} className="w-full gap-2" size="sm">
             <Plus className="w-4 h-4" />
             New Note
           </Button>
