@@ -4,7 +4,7 @@ import { v } from "convex/values";
 import { action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
-import { generateText, generateObject, streamText } from "ai";
+import { generateText, Output } from "ai";
 import { z } from "zod";
 
 const nim = createOpenAICompatible({
@@ -15,7 +15,7 @@ const nim = createOpenAICompatible({
   },
 });
 
-const model = nim.chatModel("deepseek-ai/deepseek-r1-distill-llama-70b");
+const model = nim.chatModel("deepseek-ai/deepseek-v4-flash");
 
 export const generateTitleAndTags = action({
   args: {
@@ -23,13 +23,17 @@ export const generateTitleAndTags = action({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const result = await generateObject({
+    const result = await generateText({
       model,
-      schema: z.object({
-        title: z.string().describe("A concise, descriptive title for the document (max 80 chars)"),
-        tags: z
-          .array(z.string())
-          .describe("3-5 relevant tags for categorization (lowercase, hyphenated)"),
+      output: Output.object({
+        schema: z.object({
+          title: z
+            .string()
+            .describe("A concise, descriptive title for the document (max 80 chars)"),
+          tags: z
+            .array(z.string())
+            .describe("3-5 relevant tags for categorization (lowercase, hyphenated)"),
+        }),
       }),
       prompt: `Analyze the following content and generate a title and tags for it.
 
@@ -42,16 +46,16 @@ Generate a concise title and 3-5 relevant tags for categorization.`,
     // Update the document with the generated title
     await ctx.runMutation(api.documents.update, {
       id: args.documentId,
-      title: result.object.title,
+      title: result.output.title,
     });
 
     // Add the generated tags
     await ctx.runMutation(api.documents.addTags, {
       documentId: args.documentId,
-      tags: result.object.tags,
+      tags: result.output.tags,
     });
 
-    return result.object;
+    return result.output;
   },
 });
 
