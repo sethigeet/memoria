@@ -6,6 +6,7 @@ import type { Id } from "#/lib/convex";
 import { AuthScreen } from "#/components/auth/auth-screen";
 import { Sidebar } from "#/components/layout/sidebar";
 import { LibraryView } from "#/components/library/library-view";
+import { TrashView } from "#/components/library/trash-view";
 import { DocumentView } from "#/components/document/document-view";
 import { CreateModal } from "#/components/library/create-modal";
 
@@ -32,10 +33,13 @@ function AppLayout() {
   const [activeDocument, setActiveDocument] = useState<Id<"documents"> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showTrash, setShowTrash] = useState(false);
+
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     setActiveDocument(null);
+    setShowTrash(false);
   };
 
   const handleOpenNote = (id: Id<"documents">) => {
@@ -51,13 +55,25 @@ function AppLayout() {
       <Sidebar
         activeFolder={activeFolder ?? undefined}
         activeTag={activeTag ?? undefined}
+        showTrash={showTrash}
         onFolderSelect={(id) => {
           setActiveFolder(id);
+          setActiveTag(null);
           setActiveDocument(null);
           setSearchQuery("");
+          setShowTrash(false);
         }}
         onTagSelect={(id) => {
           setActiveTag(id);
+          setActiveFolder(null);
+          setActiveDocument(null);
+          setSearchQuery("");
+          setShowTrash(false);
+        }}
+        onTrashSelect={() => {
+          setShowTrash(true);
+          setActiveFolder(null);
+          setActiveTag(null);
           setActiveDocument(null);
           setSearchQuery("");
         }}
@@ -67,6 +83,8 @@ function AppLayout() {
 
       {activeDocument ? (
         <DocumentView documentId={activeDocument} onBack={handleBack} />
+      ) : showTrash ? (
+        <TrashView />
       ) : (
         <LibraryView
           activeFolder={activeFolder ?? undefined}

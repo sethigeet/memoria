@@ -1,6 +1,5 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
 
 export const list = query({
   args: {
@@ -19,13 +18,14 @@ export const list = query({
         .query("documents")
         .withIndex("by_folderId", (q) => q.eq("folderId", args.folderId))
         .collect();
-      documents = documents.filter((d) => d.userId === userId);
+      documents = documents.filter((d) => d.userId === userId && !d.deletedAt);
     } else {
       documents = await ctx.db
         .query("documents")
         .withIndex("by_userId", (q) => q.eq("userId", userId))
         .order("desc")
         .collect();
+      documents = documents.filter((d) => !d.deletedAt);
     }
 
     if (args.tagId) {
@@ -57,16 +57,17 @@ export const list = query({
 });
 
 export const get = query({
-  args: { id: v.id("documents") },
+  args: { id: v.id("documents"), includeDeleted: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     const doc = await ctx.db.get(args.id);
     if (!doc) return null;
+    if (doc.deletedAt && !args.includeDeleted) return null;
 
     // Allow access if public folder or owner
     if (doc.folderId) {
       const folder = await ctx.db.get(doc.folderId);
-      if (folder?.isPublic) {
+      if (folder?.isPublic && !folder.deletedAt) {
         const docTags = await ctx.db
           .query("documentTags")
           .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
@@ -169,6 +170,37 @@ export const remove = mutation({
       throw new Error("Document not found");
     }
 
+    // Soft delete - move to trash
+    await ctx.db.patch(args.id, { deletedAt: Date.now() });
+  },
+});
+
+export const restore = mutation({
+  args: { id: v.id("documents") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== identity.tokenIdentifier) {
+      throw new Error("Document not found");
+    }
+
+    await ctx.db.patch(args.id, { deletedAt: undefined });
+  },
+});
+
+export const permanentlyDelete = mutation({
+  args: { id: v.id("documents") },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== identity.tokenIdentifier) {
+      throw new Error("Document not found");
+    }
+
     // Delete associated tags
     const docTags = await ctx.db
       .query("documentTags")
@@ -202,26 +234,58 @@ export const search = query({
     const titleResults = await ctx.db
       .query("documents")
       .withSearchIndex("search_title", (q) => q.search("title", args.query).eq("userId", userId))
-      .take(10);
+      .take(20);
 
     const contentResults = await ctx.db
       .query("documents")
       .withSearchIndex("search_content", (q) =>
         q.search("content", args.query).eq("userId", userId),
       )
-      .take(10);
+      .take(20);
 
-    // Merge and deduplicate
+    // Merge, deduplicate, and filter deleted
     const seen = new Set<string>();
     const results: typeof titleResults = [];
     for (const doc of [...titleResults, ...contentResults]) {
-      if (!seen.has(doc._id)) {
+      if (!seen.has(doc._id) && !doc.deletedAt) {
         seen.add(doc._id);
         results.push(doc);
       }
     }
 
-    return results.slice(0, 15);
+    // Add tags to results
+    const resultsWithTags = await Promise.all(
+      results.slice(0, 15).map(async (doc) => {
+        const docTags = await ctx.db
+          .query("documentTags")
+          .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
+          .collect();
+        const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
+        return {
+          ...doc,
+          tags: tags.filter(Boolean).map((t) => t!.name),
+        };
+      })
+    );
+
+    return resultsWithTags;
+  },
+});
+
+export const listTrash = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) return [];
+
+    const documents = await ctx.db
+      .query("documents")
+      .withIndex("by_userId", (q) => q.eq("userId", identity.tokenIdentifier))
+      .collect();
+
+    return documents
+      .filter((d) => d.deletedAt)
+      .sort((a, b) => (b.deletedAt ?? 0) - (a.deletedAt ?? 0));
   },
 });
 

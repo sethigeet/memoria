@@ -11,10 +11,12 @@
 import type * as ai from "../ai.js";
 import type * as auth from "../auth.js";
 import type * as chat from "../chat.js";
+import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
 import type * as folders from "../folders.js";
 import type * as http from "../http.js";
 import type * as tags from "../tags.js";
+import type * as trash from "../trash.js";
 
 import type {
   ApiFromModules,
@@ -26,10 +28,12 @@ declare const fullApi: ApiFromModules<{
   ai: typeof ai;
   auth: typeof auth;
   chat: typeof chat;
+  crons: typeof crons;
   documents: typeof documents;
   folders: typeof folders;
   http: typeof http;
   tags: typeof tags;
+  trash: typeof trash;
 }>;
 
 /**

@@ -134,7 +134,7 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-border flex-shrink-0">
+      <div className="p-3 border-t border-border shrink-0">
         <div className="flex gap-2 items-end bg-secondary/30 border border-border rounded-lg p-1.5 pl-3">
           <Textarea
             value={input}
@@ -146,7 +146,7 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
           />
           <Button
             size="icon"
-            className="w-7 h-7 flex-shrink-0"
+            className="w-7 h-7 shrink-0"
             onClick={handleSend}
             disabled={!input.trim() || loading}
           >

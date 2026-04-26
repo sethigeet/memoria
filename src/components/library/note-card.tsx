@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { Link, FileText, Edit3 } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api, type Id } from "#/lib/convex";
+import { Link, FileText, Edit3, Trash2 } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
-import type { Id } from "#/lib/convex";
 
 interface NoteCardProps {
   note: {
@@ -18,6 +19,12 @@ interface NoteCardProps {
 
 export function NoteCard({ note, onClick }: NoteCardProps) {
   const [hovered, setHovered] = useState(false);
+  const deleteDocument = useMutation(api.documents.remove);
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteDocument({ id: note._id });
+  };
 
   const typeConfig = {
     web: { label: "Web", icon: Link, className: "type-badge-web" },
@@ -57,7 +64,18 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
         >
           {config.label}
         </span>
-        <span className="text-[11px] text-muted-foreground">{formatDate(note._creationTime)}</span>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">{formatDate(note._creationTime)}</span>
+          {hovered && (
+            <button
+              onClick={handleDelete}
+              className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+              title="Move to trash"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Title */}

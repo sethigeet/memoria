@@ -11,9 +11,13 @@ export default defineSchema({
     color: v.string(),
     isPublic: v.boolean(),
     userId: v.string(),
+    parentId: v.optional(v.id("folders")),
+    deletedAt: v.optional(v.number()),
   })
     .index("by_userId", ["userId"])
-    .index("by_isPublic", ["isPublic"]),
+    .index("by_isPublic", ["isPublic"])
+    .index("by_parentId", ["parentId"])
+    .index("by_deletedAt", ["deletedAt"]),
 
   // Documents (web links, PDFs, custom notes)
   documents: defineTable({
@@ -24,6 +28,7 @@ export default defineSchema({
     excerpt: v.optional(v.string()),
     folderId: v.optional(v.id("folders")),
     userId: v.string(),
+    deletedAt: v.optional(v.number()),
     // AI-generated fields
     summary: v.optional(v.string()),
     summaryType: v.optional(v.string()),
@@ -31,6 +36,7 @@ export default defineSchema({
     .index("by_userId", ["userId"])
     .index("by_folderId", ["folderId"])
     .index("by_userId_and_type", ["userId", "type"])
+    .index("by_deletedAt", ["deletedAt"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery, useAction } from "convex/react";
 import { api, type Id } from "#/lib/convex";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "#/components/ui/dialog";
@@ -13,6 +13,8 @@ import {
   SelectValue,
 } from "#/components/ui/select";
 import { Link, FileText, Edit3, Loader2 } from "lucide-react";
+
+type FolderItem = { _id: Id<"folders">; name: string; color: string; depth: number };
 
 interface CreateModalProps {
   open: boolean;
@@ -32,6 +34,28 @@ export function CreateModal({ open, onClose }: CreateModalProps) {
   const folders = useQuery(api.folders.list) ?? [];
   const createDocument = useMutation(api.documents.create);
   const generateTitleAndTags = useAction(api.ai.generateTitleAndTags);
+
+  const flatFolders = useMemo(() => {
+    const result: FolderItem[] = [];
+    const childrenMap = new Map<string | undefined, typeof folders>();
+
+    for (const f of folders) {
+      const key = f.parentId ?? "root";
+      if (!childrenMap.has(key)) childrenMap.set(key, []);
+      childrenMap.get(key)!.push(f);
+    }
+
+    const traverse = (parentId: string | undefined, depth: number) => {
+      const children = childrenMap.get(parentId ?? "root") ?? [];
+      for (const c of children) {
+        result.push({ _id: c._id, name: c.name, color: c.color, depth });
+        traverse(c._id, depth + 1);
+      }
+    };
+
+    traverse(undefined, 0);
+    return result;
+  }, [folders]);
 
   const handleCreate = async () => {
     setProcessing(true);
@@ -191,9 +215,16 @@ export function CreateModal({ open, onClose }: CreateModalProps) {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">No folder</SelectItem>
-                  {folders.map((f) => (
+                  {flatFolders.map((f) => (
                     <SelectItem key={f._id} value={f._id}>
-                      {f.name}
+                      <span className="flex items-center gap-2">
+                        <span style={{ width: f.depth * 12 }} />
+                        <span
+                          className="w-2 h-2 rounded-sm flex-shrink-0"
+                          style={{ backgroundColor: f.color }}
+                        />
+                        {f.name}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

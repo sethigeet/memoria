@@ -40,10 +40,11 @@ export function LibraryView({
   const [urlInput, setUrlInput] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
 
-  const documents = useQuery(api.documents.list, {
-    folderId: activeFolder,
-    tagId: activeTag,
-  });
+  const queryArgs = {
+    ...(activeFolder && { folderId: activeFolder }),
+    ...(activeTag && { tagId: activeTag }),
+  };
+  const documents = useQuery(api.documents.list, queryArgs);
 
   const searchResults = useQuery(
     api.documents.search,
