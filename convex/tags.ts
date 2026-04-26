@@ -1,15 +1,16 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
     return await ctx.db
       .query("tags")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
   },
 });
@@ -28,11 +29,11 @@ export const getDocumentCount = query({
 export const remove = mutation({
   args: { id: v.id("tags") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const tag = await ctx.db.get(args.id);
-    if (!tag || tag.userId !== identity.tokenIdentifier) {
+    if (!tag || tag.userId !== userId) {
       throw new Error("Tag not found");
     }
 

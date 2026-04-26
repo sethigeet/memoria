@@ -1,15 +1,16 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
     const folders = await ctx.db
       .query("folders")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     const activeFolders = folders.filter((f) => !f.deletedAt);
@@ -42,8 +43,8 @@ export const get = query({
       return folder;
     }
 
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity || folder.userId !== identity.tokenIdentifier) return null;
+    const userId = await getAuthUserId(ctx);
+    if (!userId || folder.userId !== userId) return null;
 
     return folder;
   },
@@ -97,12 +98,12 @@ export const create = mutation({
     parentId: v.optional(v.id("folders")),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     if (args.parentId) {
       const parent = await ctx.db.get(args.parentId);
-      if (!parent || parent.userId !== identity.tokenIdentifier) {
+      if (!parent || parent.userId !== userId) {
         throw new Error("Parent folder not found");
       }
     }
@@ -111,7 +112,7 @@ export const create = mutation({
       name: args.name,
       color: args.color,
       isPublic: args.isPublic ?? false,
-      userId: identity.tokenIdentifier,
+      userId,
       parentId: args.parentId,
     });
   },
@@ -126,11 +127,11 @@ export const update = mutation({
     parentId: v.optional(v.union(v.id("folders"), v.null())),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const folder = await ctx.db.get(args.id);
-    if (!folder || folder.userId !== identity.tokenIdentifier) {
+    if (!folder || folder.userId !== userId) {
       throw new Error("Folder not found");
     }
 
@@ -139,7 +140,7 @@ export const update = mutation({
         throw new Error("Folder cannot be its own parent");
       }
       const parent = await ctx.db.get(args.parentId);
-      if (!parent || parent.userId !== identity.tokenIdentifier) {
+      if (!parent || parent.userId !== userId) {
         throw new Error("Parent folder not found");
       }
     }
@@ -158,11 +159,11 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("folders") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const folder = await ctx.db.get(args.id);
-    if (!folder || folder.userId !== identity.tokenIdentifier) {
+    if (!folder || folder.userId !== userId) {
       throw new Error("Folder not found");
     }
 
@@ -201,11 +202,11 @@ export const remove = mutation({
 export const restore = mutation({
   args: { id: v.id("folders") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const folder = await ctx.db.get(args.id);
-    if (!folder || folder.userId !== identity.tokenIdentifier) {
+    if (!folder || folder.userId !== userId) {
       throw new Error("Folder not found");
     }
 
@@ -228,11 +229,11 @@ export const restore = mutation({
 export const permanentlyDelete = mutation({
   args: { id: v.id("folders") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const folder = await ctx.db.get(args.id);
-    if (!folder || folder.userId !== identity.tokenIdentifier) {
+    if (!folder || folder.userId !== userId) {
       throw new Error("Folder not found");
     }
 
@@ -283,12 +284,12 @@ export const permanentlyDelete = mutation({
 export const listTrash = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
     const folders = await ctx.db
       .query("folders")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     return folders

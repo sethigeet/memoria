@@ -1,17 +1,18 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const getMessages = query({
   args: { documentId: v.id("documents") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
     const doc = await ctx.db.get(args.documentId);
     if (!doc) return [];
 
     // Allow if owner or if in public folder
-    let hasAccess = doc.userId === identity.tokenIdentifier;
+    let hasAccess = doc.userId === userId;
     if (!hasAccess && doc.folderId) {
       const folder = await ctx.db.get(doc.folderId);
       hasAccess = folder?.isPublic === true;
@@ -32,11 +33,11 @@ export const addMessage = mutation({
     content: v.string(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(args.documentId);
-    if (!doc || doc.userId !== identity.tokenIdentifier) {
+    if (!doc || doc.userId !== userId) {
       throw new Error("Document not found");
     }
 
@@ -44,7 +45,7 @@ export const addMessage = mutation({
       documentId: args.documentId,
       role: args.role,
       content: args.content,
-      userId: identity.tokenIdentifier,
+      userId,
     });
   },
 });
@@ -52,11 +53,11 @@ export const addMessage = mutation({
 export const clearMessages = mutation({
   args: { documentId: v.id("documents") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(args.documentId);
-    if (!doc || doc.userId !== identity.tokenIdentifier) {
+    if (!doc || doc.userId !== userId) {
       throw new Error("Document not found");
     }
 

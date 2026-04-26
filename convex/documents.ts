@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
   args: {
@@ -7,10 +8,8 @@ export const list = query({
     tagId: v.optional(v.id("tags")),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const userId = identity.tokenIdentifier;
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
     let documents;
     if (args.folderId) {
@@ -59,7 +58,7 @@ export const list = query({
 export const get = query({
   args: { id: v.id("documents"), includeDeleted: v.optional(v.boolean()) },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
+    const userId = await getAuthUserId(ctx);
     const doc = await ctx.db.get(args.id);
     if (!doc) return null;
     if (doc.deletedAt && !args.includeDeleted) return null;
@@ -81,7 +80,7 @@ export const get = query({
       }
     }
 
-    if (!identity || doc.userId !== identity.tokenIdentifier) return null;
+    if (!userId || doc.userId !== userId) return null;
 
     const docTags = await ctx.db
       .query("documentTags")
@@ -107,8 +106,8 @@ export const create = mutation({
     folderId: v.optional(v.id("folders")),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
 
@@ -119,7 +118,7 @@ export const create = mutation({
       source: args.source,
       excerpt,
       folderId: args.folderId,
-      userId: identity.tokenIdentifier,
+      userId,
     });
 
     return documentId;
@@ -136,11 +135,11 @@ export const update = mutation({
     summaryType: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(args.id);
-    if (!doc || doc.userId !== identity.tokenIdentifier) {
+    if (!doc || doc.userId !== userId) {
       throw new Error("Document not found");
     }
 
@@ -162,11 +161,11 @@ export const update = mutation({
 export const remove = mutation({
   args: { id: v.id("documents") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(args.id);
-    if (!doc || doc.userId !== identity.tokenIdentifier) {
+    if (!doc || doc.userId !== userId) {
       throw new Error("Document not found");
     }
 
@@ -178,11 +177,11 @@ export const remove = mutation({
 export const restore = mutation({
   args: { id: v.id("documents") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(args.id);
-    if (!doc || doc.userId !== identity.tokenIdentifier) {
+    if (!doc || doc.userId !== userId) {
       throw new Error("Document not found");
     }
 
@@ -193,11 +192,11 @@ export const restore = mutation({
 export const permanentlyDelete = mutation({
   args: { id: v.id("documents") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(args.id);
-    if (!doc || doc.userId !== identity.tokenIdentifier) {
+    if (!doc || doc.userId !== userId) {
       throw new Error("Document not found");
     }
 
@@ -226,10 +225,8 @@ export const permanentlyDelete = mutation({
 export const search = query({
   args: { query: v.string() },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-
-    const userId = identity.tokenIdentifier;
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
     const titleResults = await ctx.db
       .query("documents")
@@ -275,12 +272,12 @@ export const search = query({
 export const listTrash = query({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return [];
 
     const documents = await ctx.db
       .query("documents")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.tokenIdentifier))
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
 
     return documents
@@ -295,11 +292,11 @@ export const addTags = mutation({
     tags: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
 
     const doc = await ctx.db.get(args.documentId);
-    if (!doc || doc.userId !== identity.tokenIdentifier) {
+    if (!doc || doc.userId !== userId) {
       throw new Error("Document not found");
     }
 
@@ -307,15 +304,13 @@ export const addTags = mutation({
       // Find or create tag
       let tag = await ctx.db
         .query("tags")
-        .withIndex("by_name_and_userId", (q) =>
-          q.eq("name", tagName).eq("userId", identity.tokenIdentifier),
-        )
+        .withIndex("by_name_and_userId", (q) => q.eq("name", tagName).eq("userId", userId))
         .unique();
 
       if (!tag) {
         const tagId = await ctx.db.insert("tags", {
           name: tagName,
-          userId: identity.tokenIdentifier,
+          userId,
         });
         tag = await ctx.db.get(tagId);
       }
