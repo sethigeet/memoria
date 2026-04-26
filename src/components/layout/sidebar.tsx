@@ -7,33 +7,11 @@ import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Logo } from "#/components/ui/logo";
 import { ScrollArea, ScrollBar } from "#/components/ui/scroll-area";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger,
-  ContextMenuSub,
-  ContextMenuSubTrigger,
-  ContextMenuSubContent,
-} from "#/components/ui/context-menu";
-import {
-  Home,
-  Search,
-  Plus,
-  FolderPlus,
-  Globe,
-  Tag,
-  ChevronRight,
-  ChevronDown,
-  LogOut,
-  X,
-  Check,
-  Trash2,
-  FileText,
-  Pencil,
-  Palette,
-} from "lucide-react";
+import { Home, Search, Plus, Trash2 } from "lucide-react";
+import { SidebarFoldersSection } from "./sidebar/folders-section";
+import { SidebarTagsSection } from "./sidebar/tags-section";
+import { SidebarUserSection } from "./sidebar/user-section";
+import type { FolderWithChildren } from "./sidebar/types";
 
 interface SidebarProps {
   activeFolder?: Id<"folders">;
@@ -45,16 +23,6 @@ interface SidebarProps {
   onNewNote: (folderId?: Id<"folders">) => void;
   onSearch: (query: string) => void;
 }
-
-type FolderWithChildren = {
-  _id: Id<"folders">;
-  name: string;
-  color: string;
-  isPublic: boolean;
-  parentId?: Id<"folders">;
-  documentCount: number;
-  children: FolderWithChildren[];
-};
 
 const FOLDER_COLORS = [
   "#ef4444",
@@ -82,8 +50,9 @@ export function Sidebar({
   onSearch,
 }: SidebarProps) {
   const { signOut } = useAuthActions();
-  const folders = useQuery(api.folders.list) ?? [];
-  const tags = useQuery(api.tags.list) ?? [];
+  const folders = useQuery(api.folders.list);
+  const tags = useQuery(api.tags.list);
+  const currentUser = useQuery(api.auth.currentUser);
   const createFolder = useMutation(api.folders.create);
   const updateFolder = useMutation(api.folders.update);
   const deleteFolder = useMutation(api.folders.remove);
@@ -96,20 +65,7 @@ export function Sidebar({
   const [newFolderName, setNewFolderName] = useState("");
   const [renamingFolder, setRenamingFolder] = useState<Id<"folders"> | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const renameInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (renamingFolder) {
-      // Use requestAnimationFrame to wait for the input to be mounted
-      requestAnimationFrame(() => {
-        if (renameInputRef.current) {
-          renameInputRef.current.focus();
-          renameInputRef.current.select();
-        }
-      });
-    }
-  }, [renamingFolder]);
 
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem("sidebar-width");
@@ -118,15 +74,15 @@ export function Sidebar({
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  const startResizing = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
+  const startResizing = useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
     setIsResizing(true);
   }, []);
 
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMouseMove = (event: MouseEvent) => {
       if (!isResizing) return;
-      const newWidth = Math.min(Math.max(e.clientX, MIN_WIDTH), MAX_WIDTH);
+      const newWidth = Math.min(Math.max(event.clientX, MIN_WIDTH), MAX_WIDTH);
       setSidebarWidth(newWidth);
     };
 
@@ -153,17 +109,20 @@ export function Sidebar({
   }, [isResizing, sidebarWidth]);
 
   const folderTree = useMemo(() => {
+    if (!folders) return [];
+
     const map = new Map<string, FolderWithChildren>();
     const roots: FolderWithChildren[] = [];
 
-    for (const f of folders) {
-      map.set(f._id, { ...f, children: [] });
+    for (const folder of folders) {
+      map.set(folder._id, { ...folder, children: [] });
     }
 
-    for (const f of folders) {
-      const node = map.get(f._id)!;
-      if (f.parentId && map.has(f.parentId)) {
-        map.get(f.parentId)!.children.push(node);
+    for (const folder of folders) {
+      const node = map.get(folder._id);
+      if (!node) continue;
+      if (folder.parentId && map.has(folder.parentId)) {
+        map.get(folder.parentId)?.children.push(node);
       } else {
         roots.push(node);
       }
@@ -172,18 +131,22 @@ export function Sidebar({
     return roots;
   }, [folders]);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = (event: React.FormEvent) => {
+    event.preventDefault();
     onSearch(searchQuery);
   };
 
   const toggleFolderExpand = (id: string) => {
-    setExpandedFolders((prev) => {
-      const next = new Set(prev);
+    setExpandedFolders((previous) => {
+      const next = new Set(previous);
       if (next.has(id)) next.delete(id);
       else next.add(id);
       return next;
     });
+  };
+
+  const ensureFolderExpanded = (id: string) => {
+    setExpandedFolders((previous) => new Set(previous).add(id));
   };
 
   const handleCreateFolder = async (parentId?: Id<"folders">) => {
@@ -195,7 +158,7 @@ export function Sidebar({
     });
     setNewFolderName("");
     setCreatingFolder(null);
-    if (parentId) setExpandedFolders((prev) => new Set(prev).add(parentId));
+    if (parentId) ensureFolderExpanded(parentId);
   };
 
   const handleRenameFolder = async (folderId: Id<"folders">) => {
@@ -205,177 +168,18 @@ export function Sidebar({
     setRenameValue("");
   };
 
-  const handleChangeColor = async (folderId: Id<"folders">, color: string) => {
+  const handleChangeFolderColor = async (folderId: Id<"folders">, color: string) => {
     await updateFolder({ id: folderId, color });
   };
 
-  const renderFolder = (folder: FolderWithChildren, depth: number) => {
-    const hasChildren = folder.children.length > 0;
-    const isExpanded = expandedFolders.has(folder._id);
-    const isRenaming = renamingFolder === folder._id;
+  const handleDeleteFolder = (folderId: Id<"folders">) => {
+    if (activeFolder === folderId) onFolderSelect(null);
+    void deleteFolder({ id: folderId });
+  };
 
-    const selectFolder = () => {
-      const newFolderId = activeFolder === folder._id ? null : folder._id;
-      onFolderSelect(newFolderId);
-    };
-
-    const startRenaming = () => {
-      setRenamingFolder(folder._id);
-      setRenameValue(folder.name);
-    };
-
-    return (
-      <div key={folder._id}>
-        <ContextMenu>
-          <ContextMenuTrigger asChild>
-            <div
-              className={`group flex items-center gap-1.5 py-1.5 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 whitespace-nowrap pr-2 cursor-pointer ${
-                activeFolder === folder._id
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/50"
-              }`}
-              style={{ paddingLeft: `${depth * 12 + 8}px` }}
-              onClick={selectFolder}
-            >
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (hasChildren) toggleFolderExpand(folder._id);
-                }}
-                className={`w-4 h-4 flex items-center justify-center shrink-0 ${hasChildren ? "cursor-pointer" : "cursor-default"}`}
-              >
-                {hasChildren ? (
-                  isExpanded ? (
-                    <ChevronDown className="w-3 h-3" />
-                  ) : (
-                    <ChevronRight className="w-3 h-3" />
-                  )
-                ) : null}
-              </button>
-              <div
-                className="w-2 h-2 rounded-sm shrink-0"
-                style={{ backgroundColor: folder.color }}
-              />
-              {isRenaming ? (
-                <Input
-                  ref={renameInputRef}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    e.stopPropagation();
-                    if (e.key === "Enter") handleRenameFolder(folder._id);
-                    if (e.key === "Escape") {
-                      setRenamingFolder(null);
-                      setRenameValue("");
-                    }
-                  }}
-                  onBlur={() => handleRenameFolder(folder._id)}
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-5 text-[13px] bg-sidebar-accent border-sidebar-border px-1 py-0 flex-1"
-                />
-              ) : (
-                <>
-                  <span className="truncate flex-1">{folder.name}</span>
-                  {folder.documentCount > 0 && (
-                    <span className="text-[10px] text-muted-foreground/60 shrink-0">
-                      {folder.documentCount}
-                    </span>
-                  )}
-                  {folder.isPublic && <Globe className="w-3 h-3 text-muted-foreground shrink-0" />}
-                </>
-              )}
-            </div>
-          </ContextMenuTrigger>
-          <ContextMenuContent className="w-48">
-            <ContextMenuItem onClick={() => onNewNote(folder._id)}>
-              <FileText className="w-4 h-4" />
-              New note in folder
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                setCreatingFolder(folder._id);
-                setExpandedFolders((prev) => new Set(prev).add(folder._id));
-              }}
-            >
-              <FolderPlus className="w-4 h-4" />
-              New subfolder
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={startRenaming}>
-              <Pencil className="w-4 h-4" />
-              Rename
-            </ContextMenuItem>
-            <ContextMenuSub>
-              <ContextMenuSubTrigger>
-                <Palette className="w-4 h-4" />
-                Change color
-              </ContextMenuSubTrigger>
-              <ContextMenuSubContent className="w-36">
-                <div className="grid grid-cols-4 gap-1 p-2">
-                  {FOLDER_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => handleChangeColor(folder._id, color)}
-                      className={`w-6 h-6 rounded-md border-2 transition-transform hover:scale-110 ${
-                        folder.color === color ? "border-white" : "border-transparent"
-                      }`}
-                      style={{ backgroundColor: color }}
-                    />
-                  ))}
-                </div>
-              </ContextMenuSubContent>
-            </ContextMenuSub>
-            <ContextMenuSeparator />
-            <ContextMenuItem
-              variant="destructive"
-              onClick={() => {
-                if (activeFolder === folder._id) onFolderSelect(null);
-                deleteFolder({ id: folder._id });
-              }}
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete folder
-            </ContextMenuItem>
-          </ContextMenuContent>
-        </ContextMenu>
-        {isExpanded && (
-          <>
-            {folder.children.map((child) => renderFolder(child, depth + 1))}
-            {creatingFolder === folder._id && (
-              <div
-                className="flex items-center gap-1.5 mx-1.5 my-0.5"
-                style={{ paddingLeft: `${(depth + 1) * 12 + 8}px` }}
-              >
-                <Input
-                  value={newFolderName}
-                  onChange={(e) => setNewFolderName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreateFolder(folder._id);
-                    if (e.key === "Escape") setCreatingFolder(null);
-                  }}
-                  placeholder="Folder name..."
-                  className="h-7 text-[13px] bg-sidebar-accent border-sidebar-border flex-1"
-                  autoFocus
-                />
-                <button
-                  onClick={() => handleCreateFolder(folder._id)}
-                  className="p-1 rounded hover:bg-sidebar-accent text-primary"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  onClick={() => setCreatingFolder(null)}
-                  className="p-1 rounded hover:bg-sidebar-accent text-muted-foreground"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </>
-        )}
-      </div>
-    );
+  const handleRenameCancel = () => {
+    setRenamingFolder(null);
+    setRenameValue("");
   };
 
   return (
@@ -385,7 +189,6 @@ export function Sidebar({
       style={{ width: sidebarWidth }}
     >
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Logo */}
         <div className="p-4 border-b border-sidebar-border flex items-center gap-3 shrink-0">
           <div className="w-7 h-7 rounded-lg bg-[#0e0e12] border border-border flex items-center justify-center overflow-hidden">
             <Logo size={20} />
@@ -393,7 +196,6 @@ export function Sidebar({
           <span className="font-bold text-[15px] tracking-tight">Memoria</span>
         </div>
 
-        {/* New Note Button */}
         <div className="px-2.5 pt-3 pb-2">
           <Button onClick={() => onNewNote()} className="w-full gap-2" size="sm">
             <Plus className="w-4 h-4" />
@@ -401,23 +203,20 @@ export function Sidebar({
           </Button>
         </div>
 
-        {/* Search */}
         <form onSubmit={handleSearch} className="px-2.5 pb-2">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
             <Input
               placeholder="Search..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(event) => setSearchQuery(event.target.value)}
               className="pl-9 h-8 text-sm bg-sidebar-accent border-sidebar-border"
             />
           </div>
         </form>
 
-        {/* Navigation */}
         <ScrollArea className="flex-1">
           <div className="px-1.5 min-w-max">
-            {/* Library */}
             <button
               onClick={() => {
                 onFolderSelect(null);
@@ -434,96 +233,45 @@ export function Sidebar({
               Library
             </button>
 
-            {/* Folders */}
-            <div className="mt-2">
-              <div className="flex items-center justify-between pr-3">
-                <button
-                  onClick={() => setFoldersOpen(!foldersOpen)}
-                  className="flex items-center gap-1.5 px-4 py-1 text-[10.5px] font-bold tracking-wider uppercase text-muted-foreground cursor-pointer"
-                >
-                  {foldersOpen ? (
-                    <ChevronDown className="w-2.5 h-2.5" />
-                  ) : (
-                    <ChevronRight className="w-2.5 h-2.5" />
-                  )}
-                  Folders
-                </button>
-                <button
-                  onClick={() => setCreatingFolder("root")}
-                  className="p-1 rounded hover:bg-sidebar-accent text-muted-foreground"
-                  title="New folder"
-                >
-                  <Plus className="w-3 h-3" />
-                </button>
-              </div>
-              {foldersOpen && (
-                <>
-                  {folderTree.map((folder) => renderFolder(folder, 1))}
-                  {creatingFolder === "root" && (
-                    <div className="flex items-center gap-1.5 mx-1.5 my-0.5 pl-5">
-                      <Input
-                        value={newFolderName}
-                        onChange={(e) => setNewFolderName(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleCreateFolder();
-                          if (e.key === "Escape") setCreatingFolder(null);
-                        }}
-                        placeholder="Folder name..."
-                        className="h-7 text-[13px] bg-sidebar-accent border-sidebar-border flex-1"
-                        autoFocus
-                      />
-                      <button
-                        onClick={() => handleCreateFolder()}
-                        className="p-1 rounded hover:bg-sidebar-accent text-primary"
-                      >
-                        <Check className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setCreatingFolder(null)}
-                        className="p-1 rounded hover:bg-sidebar-accent text-muted-foreground"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+            <SidebarFoldersSection
+              activeFolder={activeFolder}
+              foldersOpen={foldersOpen}
+              folderTree={folderTree}
+              expandedFolders={expandedFolders}
+              creatingFolder={creatingFolder}
+              newFolderName={newFolderName}
+              renamingFolder={renamingFolder}
+              renameValue={renameValue}
+              folderColors={FOLDER_COLORS}
+              onToggleFoldersOpen={() => setFoldersOpen((open) => !open)}
+              onFolderSelect={onFolderSelect}
+              onToggleFolderExpand={toggleFolderExpand}
+              onEnsureFolderExpanded={ensureFolderExpanded}
+              onCreateFolderStart={setCreatingFolder}
+              onCreateFolderSubmit={handleCreateFolder}
+              onCreateFolderCancel={() => setCreatingFolder(null)}
+              onNewFolderNameChange={setNewFolderName}
+              onRenameStart={(folderId, currentName) => {
+                setRenamingFolder(folderId);
+                setRenameValue(currentName);
+              }}
+              onRenameSubmit={handleRenameFolder}
+              onRenameCancel={handleRenameCancel}
+              onRenameValueChange={setRenameValue}
+              onNewNote={onNewNote}
+              onChangeFolderColor={handleChangeFolderColor}
+              onDeleteFolder={handleDeleteFolder}
+            />
 
-            {/* Tags */}
-            <div className="mt-2">
-              <button
-                onClick={() => setTagsOpen(!tagsOpen)}
-                className="flex items-center gap-1.5 px-4 py-1 text-[10.5px] font-bold tracking-wider uppercase text-muted-foreground cursor-pointer"
-              >
-                {tagsOpen ? (
-                  <ChevronDown className="w-2.5 h-2.5" />
-                ) : (
-                  <ChevronRight className="w-2.5 h-2.5" />
-                )}
-                Tags
-              </button>
-              {tagsOpen &&
-                tags.map((tag) => (
-                  <button
-                    key={tag._id}
-                    onClick={() => {
-                      onTagSelect(activeTag === tag._id ? null : tag._id);
-                      onFolderSelect(null);
-                    }}
-                    className={`w-full flex items-center gap-2 px-2.5 py-1.5 pl-6 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 ${
-                      activeTag === tag._id
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-sidebar-accent/50"
-                    }`}
-                  >
-                    <Tag className="w-3 h-3" />
-                    <span>{tag.name}</span>
-                  </button>
-                ))}
-            </div>
+            <SidebarTagsSection
+              tagsOpen={tagsOpen}
+              tags={tags ?? []}
+              activeTag={activeTag}
+              onToggleTagsOpen={() => setTagsOpen((open) => !open)}
+              onTagSelect={onTagSelect}
+              onFolderSelect={onFolderSelect}
+            />
 
-            {/* Trash */}
             <div className="mt-4">
               <button
                 onClick={onTrashSelect}
@@ -541,25 +289,9 @@ export function Sidebar({
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
 
-        {/* User */}
-        <div className="p-3 border-t border-sidebar-border flex items-center gap-2.5 shrink-0">
-          <div className="w-7 h-7 rounded-full bg-purple-500 flex items-center justify-center text-xs font-bold text-white shrink-0">
-            U
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[13px] font-medium truncate">User</div>
-            <div className="text-[11px] text-muted-foreground">Free plan</div>
-          </div>
-          <button
-            onClick={() => signOut()}
-            className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground"
-          >
-            <LogOut className="w-4 h-4" />
-          </button>
-        </div>
+        <SidebarUserSection user={currentUser} onSignOut={() => signOut()} />
       </div>
 
-      {/* Resize handle */}
       <div
         onMouseDown={startResizing}
         className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 transition-colors ${
