@@ -30,9 +30,9 @@ interface DocumentViewProps {
 
 export function DocumentView({ documentId, onBack }: DocumentViewProps) {
   const document = useQuery(api.documents.get, { id: documentId });
-  const [summaryType, setSummaryType] = useState<"concise" | "detailed" | "action-items">(
-    "concise",
-  );
+  const [summaryType, setSummaryType] = useState<
+    "concise" | "detailed" | "action-items"
+  >("concise");
   const [generating, setGenerating] = useState(false);
 
   const updateDocument = useMutation(api.documents.update);
@@ -88,20 +88,28 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
   return (
     <div className="flex-1 h-screen flex flex-col overflow-hidden">
       {/* Topbar */}
-      <div className="px-4 h-[50px] border-b border-border flex items-center gap-2.5 flex-shrink-0 bg-[#0e0e12]">
-        <Button variant="outline" size="icon" className="w-7 h-7" onClick={onBack}>
+      <div className="px-4 h-[50px] border-b border-border flex items-center gap-2.5 shrink-0 bg-[#0e0e12]">
+        <Button
+          variant="outline"
+          size="icon"
+          className="w-7 h-7"
+          onClick={onBack}
+        >
           <ArrowLeft className="w-3.5 h-3.5" />
         </Button>
 
         <div className="flex items-center gap-1.5 text-[12px] text-muted-foreground flex-1 overflow-hidden">
-          <button onClick={onBack} className="hover:text-foreground transition-colors">
+          <button
+            onClick={onBack}
+            className="hover:text-foreground transition-colors"
+          >
             Library
           </button>
           <span className="text-border">/</span>
           <span className="truncate text-foreground/70">{document.title}</span>
         </div>
 
-        <div className="flex gap-1.5 flex-shrink-0">
+        <div className="flex gap-1.5 shrink-0">
           <Button variant="outline" size="sm" className="gap-1.5">
             <Share className="w-3 h-3" />
             Share
@@ -117,7 +125,7 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
         {/* Left: Content */}
         <div className="w-[62%] border-r border-border flex flex-col overflow-hidden">
           {/* Meta header */}
-          <div className="px-7 pt-5 pb-3 flex-shrink-0">
+          <div className="px-7 pt-5 pb-3 shrink-0">
             <div className="flex items-center gap-1.5 mb-2.5">
               {document.folder && (
                 <span
@@ -165,7 +173,7 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
           </div>
 
           {/* Summary bar */}
-          <div className="px-7 py-3 border-y border-border flex-shrink-0">
+          <div className="px-7 py-3 border-y border-border shrink-0">
             <div className="flex items-center gap-2 flex-wrap">
               <Select
                 value={summaryType}
@@ -236,7 +244,10 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
 
         {/* Right: Chat/Notebook */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
-          <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
+          <Tabs
+            defaultValue="chat"
+            className="flex-1 flex flex-col overflow-hidden"
+          >
             <TabsList className="w-full justify-start rounded-none border-b border-border bg-[#0e0e12] h-auto p-0 px-3.5">
               <TabsTrigger
                 value="chat"
@@ -258,7 +269,10 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
               <ChatPane documentId={documentId} content={document.content} />
             </TabsContent>
 
-            <TabsContent value="notebook" className="flex-1 overflow-hidden m-0 p-4">
+            <TabsContent
+              value="notebook"
+              className="flex-1 overflow-hidden m-0 p-4"
+            >
               <div className="text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2.5">
                 Personal notes on this document
               </div>

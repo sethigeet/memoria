@@ -33,7 +33,18 @@ function AppLayout() {
   const [activeDocument, setActiveDocument] = useState<Id<"documents"> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createInFolder, setCreateInFolder] = useState<Id<"folders"> | undefined>(undefined);
   const [showTrash, setShowTrash] = useState(false);
+
+  const handleNewNote = (folderId?: Id<"folders">) => {
+    setCreateInFolder(folderId);
+    setShowCreateModal(true);
+  };
+
+  const handleCloseCreateModal = () => {
+    setShowCreateModal(false);
+    setCreateInFolder(undefined);
+  };
 
 
   const handleSearch = (query: string) => {
@@ -77,7 +88,7 @@ function AppLayout() {
           setActiveDocument(null);
           setSearchQuery("");
         }}
-        onNewNote={() => setShowCreateModal(true)}
+        onNewNote={handleNewNote}
         onSearch={handleSearch}
       />
 
@@ -90,12 +101,16 @@ function AppLayout() {
           activeFolder={activeFolder ?? undefined}
           activeTag={activeTag ?? undefined}
           onOpenNote={handleOpenNote}
-          onNewNote={() => setShowCreateModal(true)}
+          onNewNote={() => handleNewNote()}
           searchQuery={searchQuery || undefined}
         />
       )}
 
-      <CreateModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
+      <CreateModal
+        open={showCreateModal}
+        onClose={handleCloseCreateModal}
+        initialFolderId={createInFolder}
+      />
     </div>
   );
 }
