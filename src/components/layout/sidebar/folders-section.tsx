@@ -153,7 +153,10 @@ function FolderTreeItem({
                 )
               ) : null}
             </button>
-            <div className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: folder.color }} />
+            <div
+              className="w-2 h-2 rounded-sm shrink-0"
+              style={{ backgroundColor: folder.color }}
+            />
             {isRenaming ? (
               <Input
                 ref={renameInputRef}
@@ -308,7 +311,11 @@ export function SidebarFoldersSection({
           onClick={onToggleFoldersOpen}
           className="flex items-center gap-1.5 px-4 py-1 text-[10.5px] font-bold tracking-wider uppercase text-muted-foreground cursor-pointer"
         >
-          {foldersOpen ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
+          {foldersOpen ? (
+            <ChevronDown className="w-2.5 h-2.5" />
+          ) : (
+            <ChevronRight className="w-2.5 h-2.5" />
+          )}
           Folders
         </button>
         <button

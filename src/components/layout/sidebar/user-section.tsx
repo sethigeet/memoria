@@ -14,7 +14,7 @@ interface SidebarUserSectionProps {
 
 export function SidebarUserSection({ user, onSignOut }: SidebarUserSectionProps) {
   const displayName = user?.name ?? user?.email ?? "User";
-  const detailText = user === undefined ? "Loading..." : user?.email ?? "Signed in";
+  const detailText = user === undefined ? "Loading..." : (user?.email ?? "Signed in");
   const avatarText = displayName.trim().charAt(0).toUpperCase() || "U";
 
   return (
@@ -30,7 +30,10 @@ export function SidebarUserSection({ user, onSignOut }: SidebarUserSectionProps)
         <div className="text-[13px] font-medium truncate">{displayName}</div>
         <div className="text-[11px] text-muted-foreground truncate">{detailText}</div>
       </div>
-      <button onClick={onSignOut} className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground">
+      <button
+        onClick={onSignOut}
+        className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground"
+      >
         <LogOut className="w-4 h-4" />
       </button>
     </div>

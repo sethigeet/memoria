@@ -25,7 +25,11 @@ export function SidebarTagsSection({
         onClick={onToggleTagsOpen}
         className="flex items-center gap-1.5 px-4 py-1 text-[10.5px] font-bold tracking-wider uppercase text-muted-foreground cursor-pointer"
       >
-        {tagsOpen ? <ChevronDown className="w-2.5 h-2.5" /> : <ChevronRight className="w-2.5 h-2.5" />}
+        {tagsOpen ? (
+          <ChevronDown className="w-2.5 h-2.5" />
+        ) : (
+          <ChevronRight className="w-2.5 h-2.5" />
+        )}
         Tags
       </button>
 

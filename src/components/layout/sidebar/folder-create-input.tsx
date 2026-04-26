@@ -63,7 +63,10 @@ export function FolderCreateInput({
       <button onClick={onSubmit} className="p-1 rounded hover:bg-sidebar-accent text-primary">
         <Check className="w-3.5 h-3.5" />
       </button>
-      <button onClick={onCancel} className="p-1 rounded hover:bg-sidebar-accent text-muted-foreground">
+      <button
+        onClick={onCancel}
+        className="p-1 rounded hover:bg-sidebar-accent text-muted-foreground"
+      >
         <X className="w-3.5 h-3.5" />
       </button>
     </div>
