@@ -113,9 +113,9 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
       </div>
 
       {/* Body */}
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex min-h-0">
         {/* Left: Content */}
-        <div className="w-[62%] border-r border-border flex flex-col overflow-hidden">
+        <div className="w-[62%] border-r border-border flex flex-col min-h-0 pb-5 overflow-y-auto">
           {/* Meta header */}
           <div className="px-7 pt-5 pb-3 shrink-0">
             <div className="flex items-center gap-1.5 mb-2.5">
@@ -227,7 +227,7 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
           </div>
 
           {/* Article content */}
-          <div className="flex-1 overflow-auto px-7 py-5">
+          <div className="flex-1 min-h-0 px-7 py-5">
             <div className="text-[14px] text-muted-foreground leading-[1.8] max-w-[640px] whitespace-pre-wrap">
               {document.content}
             </div>
