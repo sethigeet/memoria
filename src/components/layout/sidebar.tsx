@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api, type Id } from "#/lib/convex";
@@ -29,9 +29,9 @@ const FOLDER_COLORS = [
   "#ec4899",
 ];
 
-const MIN_WIDTH = 180;
-const MAX_WIDTH = 400;
-const DEFAULT_WIDTH = 232;
+export const SIDEBAR_MIN_WIDTH = 180;
+export const SIDEBAR_MAX_WIDTH = 400;
+export const SIDEBAR_DEFAULT_WIDTH = 232;
 
 export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
   const { signOut } = useAuthActions();
@@ -60,47 +60,6 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
   const [newFolderName, setNewFolderName] = useState("");
   const [renamingFolder, setRenamingFolder] = useState<Id<"folders"> | null>(null);
   const [renameValue, setRenameValue] = useState("");
-
-  const [sidebarWidth, setSidebarWidth] = useState(() => {
-    const saved = localStorage.getItem("sidebar-width");
-    return saved ? Math.min(Math.max(parseInt(saved), MIN_WIDTH), MAX_WIDTH) : DEFAULT_WIDTH;
-  });
-  const [isResizing, setIsResizing] = useState(false);
-  const sidebarRef = useRef<HTMLDivElement>(null);
-
-  const startResizing = useCallback((event: React.MouseEvent) => {
-    event.preventDefault();
-    setIsResizing(true);
-  }, []);
-
-  useEffect(() => {
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!isResizing) return;
-      const newWidth = Math.min(Math.max(event.clientX, MIN_WIDTH), MAX_WIDTH);
-      setSidebarWidth(newWidth);
-    };
-
-    const handleMouseUp = () => {
-      if (isResizing) {
-        setIsResizing(false);
-        localStorage.setItem("sidebar-width", sidebarWidth.toString());
-      }
-    };
-
-    if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "col-resize";
-      document.body.style.userSelect = "none";
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizing, sidebarWidth]);
 
   const folderTree = useMemo(() => {
     if (!folders) return [];
@@ -179,11 +138,7 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
   };
 
   return (
-    <div
-      ref={sidebarRef}
-      className="h-screen bg-sidebar border-r border-sidebar-border flex shrink-0 relative"
-      style={{ width: sidebarWidth }}
-    >
+    <div className="h-full bg-sidebar flex w-full">
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="p-4 border-b border-sidebar-border flex items-center gap-3 shrink-0">
           <div className="w-7 h-7 rounded-lg bg-[#0e0e12] border border-border flex items-center justify-center overflow-hidden">
@@ -280,13 +235,6 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
 
         <SidebarUserSection user={currentUser} onSignOut={() => signOut()} />
       </div>
-
-      <div
-        onMouseDown={startResizing}
-        className={`absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/30 transition-colors ${
-          isResizing ? "bg-primary/50" : ""
-        }`}
-      />
     </div>
   );
 }
