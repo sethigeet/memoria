@@ -16,7 +16,6 @@ function SearchRoute() {
     <LibraryView
       searchQuery={q}
       onOpenNote={(id) => navigate({ to: "/document/$documentId", params: { documentId: id } })}
-      onNewNote={() => {}}
     />
   );
 }

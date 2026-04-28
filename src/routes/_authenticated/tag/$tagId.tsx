@@ -14,7 +14,6 @@ function TagView() {
     <LibraryView
       activeTag={tagId as Id<"tags">}
       onOpenNote={(id) => navigate({ to: "/document/$documentId", params: { documentId: id } })}
-      onNewNote={() => {}}
     />
   );
 }

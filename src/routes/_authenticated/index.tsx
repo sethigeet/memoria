@@ -11,7 +11,6 @@ function LibraryIndex() {
   return (
     <LibraryView
       onOpenNote={(id) => navigate({ to: "/document/$documentId", params: { documentId: id } })}
-      onNewNote={() => {}}
     />
   );
 }

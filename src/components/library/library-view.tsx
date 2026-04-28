@@ -3,20 +3,18 @@ import { useQuery } from "convex/react";
 import { api, type Id } from "#/lib/convex";
 import { NoteCard } from "./note-card";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
-import { Plus, Filter, ChevronDown, Link as LinkIcon, BookOpen } from "lucide-react";
+import { Filter, ChevronDown, BookOpen } from "lucide-react";
 
 interface LibraryViewProps {
   activeFolder?: Id<"folders">;
   activeTag?: Id<"tags">;
   onOpenNote: (id: Id<"documents">) => void;
-  onNewNote: () => void;
   searchQuery?: string;
 }
 
@@ -34,10 +32,8 @@ export function LibraryView({
   activeFolder,
   activeTag,
   onOpenNote,
-  onNewNote,
   searchQuery,
 }: LibraryViewProps) {
-  const [urlInput, setUrlInput] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
 
   const queryArgs = {
@@ -146,29 +142,6 @@ export function LibraryView({
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <Button onClick={onNewNote} size="sm" className="gap-2">
-            <Plus className="w-3.5 h-3.5" />
-            New Note
-          </Button>
-        </div>
-      </div>
-
-      {/* URL capture bar */}
-      <div className="px-6 py-2.5 border-b border-border bg-[#0e0e12] shrink-0">
-        <div className="flex gap-2">
-          <div className="flex-1 flex items-center gap-2.5 px-3 py-2 bg-secondary/30 border border-border rounded-lg">
-            <LinkIcon className="w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="Paste a URL or drop a PDF to add to your library..."
-              className="border-0 bg-transparent h-auto p-0 text-[13px] focus-visible:ring-0"
-            />
-          </div>
-          <Button variant="outline" size="sm" onClick={() => setUrlInput("")}>
-            Add
-          </Button>
         </div>
       </div>
 

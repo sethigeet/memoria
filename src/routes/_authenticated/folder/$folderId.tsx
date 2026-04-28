@@ -14,7 +14,6 @@ function FolderView() {
     <LibraryView
       activeFolder={folderId as Id<"folders">}
       onOpenNote={(id) => navigate({ to: "/document/$documentId", params: { documentId: id } })}
-      onNewNote={() => {}}
     />
   );
 }
