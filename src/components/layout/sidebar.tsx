@@ -2,7 +2,7 @@ import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { api, type Id } from "#/lib/convex";
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useMatch, useLocation } from "@tanstack/react-router";
 import { Button } from "#/components/ui/button";
 import { Input } from "#/components/ui/input";
 import { Logo } from "#/components/ui/logo";
@@ -14,12 +14,6 @@ import { SidebarUserSection } from "./sidebar/user-section";
 import type { FolderWithChildren } from "./sidebar/types";
 
 interface SidebarProps {
-  activeFolder?: Id<"folders">;
-  activeTag?: Id<"tags">;
-  showTrash?: boolean;
-  onFolderSelect: (id: Id<"folders"> | null) => void;
-  onTagSelect: (id: Id<"tags"> | null) => void;
-  onTrashSelect: () => void;
   onNewNote: (folderId?: Id<"folders">) => void;
   onSearch: (query: string) => void;
 }
@@ -39,16 +33,7 @@ const MIN_WIDTH = 180;
 const MAX_WIDTH = 400;
 const DEFAULT_WIDTH = 232;
 
-export function Sidebar({
-  activeFolder,
-  activeTag,
-  showTrash,
-  onFolderSelect,
-  onTagSelect,
-  onTrashSelect,
-  onNewNote,
-  onSearch,
-}: SidebarProps) {
+export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
   const { signOut } = useAuthActions();
   const folders = useQuery(api.folders.list);
   const tags = useQuery(api.tags.list);
@@ -56,6 +41,16 @@ export function Sidebar({
   const createFolder = useMutation(api.folders.create);
   const updateFolder = useMutation(api.folders.update);
   const deleteFolder = useMutation(api.folders.remove);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const folderMatch = useMatch({ from: "/_authenticated/folder/$folderId", shouldThrow: false });
+  const tagMatch = useMatch({ from: "/_authenticated/tag/$tagId", shouldThrow: false });
+
+  const activeFolder = folderMatch?.params?.folderId as Id<"folders"> | undefined;
+  const activeTag = tagMatch?.params?.tagId as Id<"tags"> | undefined;
+  const showTrash = location.pathname === "/trash";
+  const isHome = location.pathname === "/" || location.pathname === "";
 
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [tagsOpen, setTagsOpen] = useState(false);
@@ -65,7 +60,6 @@ export function Sidebar({
   const [newFolderName, setNewFolderName] = useState("");
   const [renamingFolder, setRenamingFolder] = useState<Id<"folders"> | null>(null);
   const [renameValue, setRenameValue] = useState("");
-  const navigate = useNavigate();
 
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem("sidebar-width");
@@ -173,7 +167,9 @@ export function Sidebar({
   };
 
   const handleDeleteFolder = (folderId: Id<"folders">) => {
-    if (activeFolder === folderId) onFolderSelect(null);
+    if (activeFolder === folderId) {
+      navigate({ to: "/" });
+    }
     void deleteFolder({ id: folderId });
   };
 
@@ -217,21 +213,17 @@ export function Sidebar({
 
         <ScrollArea className="flex-1">
           <div className="px-1.5 min-w-max">
-            <button
-              onClick={() => {
-                onFolderSelect(null);
-                onTagSelect(null);
-                navigate({ to: "/" });
-              }}
+            <Link
+              to="/"
               className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 ${
-                !activeFolder && !activeTag && !showTrash
+                isHome && !activeFolder && !activeTag && !showTrash
                   ? "bg-sidebar-accent text-sidebar-accent-foreground"
                   : "text-muted-foreground hover:bg-sidebar-accent/50"
               }`}
             >
               <Home className="w-3.5 h-3.5" />
               Library
-            </button>
+            </Link>
 
             <SidebarFoldersSection
               activeFolder={activeFolder}
@@ -244,7 +236,6 @@ export function Sidebar({
               renameValue={renameValue}
               folderColors={FOLDER_COLORS}
               onToggleFoldersOpen={() => setFoldersOpen((open) => !open)}
-              onFolderSelect={onFolderSelect}
               onToggleFolderExpand={toggleFolderExpand}
               onEnsureFolderExpanded={ensureFolderExpanded}
               onCreateFolderStart={setCreatingFolder}
@@ -268,13 +259,11 @@ export function Sidebar({
               tags={tags ?? []}
               activeTag={activeTag}
               onToggleTagsOpen={() => setTagsOpen((open) => !open)}
-              onTagSelect={onTagSelect}
-              onFolderSelect={onFolderSelect}
             />
 
             <div className="mt-4">
-              <button
-                onClick={onTrashSelect}
+              <Link
+                to="/trash"
                 className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 ${
                   showTrash
                     ? "bg-sidebar-accent text-sidebar-accent-foreground"
@@ -283,7 +272,7 @@ export function Sidebar({
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 Trash
-              </button>
+              </Link>
             </div>
           </div>
           <ScrollBar orientation="horizontal" />

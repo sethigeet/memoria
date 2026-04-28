@@ -1,11 +1,16 @@
+import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "#/lib/convex";
 import { Button } from "#/components/ui/button";
 import { Trash2, RotateCcw, AlertTriangle, Folder, FileText } from "lucide-react";
 
+export const Route = createFileRoute("/_authenticated/trash")({
+  component: TrashRoute,
+});
+
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
-export function TrashView() {
+function TrashRoute() {
   const trashedDocuments = useQuery(api.documents.listTrash) ?? [];
   const trashedFolders = useQuery(api.folders.listTrash) ?? [];
   const restoreDocument = useMutation(api.documents.restore);

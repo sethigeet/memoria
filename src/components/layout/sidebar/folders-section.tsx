@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Link } from "@tanstack/react-router";
 import type { Id } from "#/lib/convex";
 import { Input } from "#/components/ui/input";
 import {
@@ -36,7 +37,6 @@ interface SidebarFoldersSectionProps {
   renameValue: string;
   folderColors: readonly string[];
   onToggleFoldersOpen: () => void;
-  onFolderSelect: (id: Id<"folders"> | null) => void;
   onToggleFolderExpand: (id: string) => void;
   onEnsureFolderExpanded: (id: string) => void;
   onCreateFolderStart: (parentId: CreatingFolder) => void;
@@ -62,7 +62,6 @@ interface FolderTreeItemProps {
   renamingFolder: Id<"folders"> | null;
   renameValue: string;
   folderColors: readonly string[];
-  onFolderSelect: (id: Id<"folders"> | null) => void;
   onToggleFolderExpand: (id: string) => void;
   onEnsureFolderExpanded: (id: string) => void;
   onCreateFolderStart: (parentId: CreatingFolder) => void;
@@ -88,7 +87,6 @@ function FolderTreeItem({
   renamingFolder,
   renameValue,
   folderColors,
-  onFolderSelect,
   onToggleFolderExpand,
   onEnsureFolderExpanded,
   onCreateFolderStart,
@@ -117,27 +115,24 @@ function FolderTreeItem({
     });
   }, [isRenaming]);
 
-  const selectFolder = () => {
-    const nextFolder = activeFolder === folder._id ? null : folder._id;
-    onFolderSelect(nextFolder);
-  };
-
   return (
     <div>
       <ContextMenu>
         <ContextMenuTrigger asChild>
-          <div
+          <Link
+            to="/folder/$folderId"
+            params={{ folderId: folder._id }}
             className={`group flex items-center gap-1.5 py-1.5 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 whitespace-nowrap pr-2 cursor-pointer ${
               activeFolder === folder._id
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-muted-foreground hover:bg-sidebar-accent/50"
             }`}
             style={{ paddingLeft: `${depth * 12 + 8}px` }}
-            onClick={selectFolder}
           >
             <button
               type="button"
               onClick={(event) => {
+                event.preventDefault();
                 event.stopPropagation();
                 if (hasChildren) onToggleFolderExpand(folder._id);
               }}
@@ -168,7 +163,10 @@ function FolderTreeItem({
                   if (event.key === "Escape") onRenameCancel();
                 }}
                 onBlur={() => onRenameSubmit(folder._id)}
-                onClick={(event) => event.stopPropagation()}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
                 className="h-5 text-[13px] bg-sidebar-accent border-sidebar-border px-1 py-0 flex-1"
               />
             ) : (
@@ -182,7 +180,7 @@ function FolderTreeItem({
                 {folder.isPublic && <Globe className="w-3 h-3 text-muted-foreground shrink-0" />}
               </>
             )}
-          </div>
+          </Link>
         </ContextMenuTrigger>
         <ContextMenuContent className="w-48">
           <ContextMenuItem onClick={() => onNewNote(folder._id)}>
@@ -245,7 +243,6 @@ function FolderTreeItem({
               renamingFolder={renamingFolder}
               renameValue={renameValue}
               folderColors={folderColors}
-              onFolderSelect={onFolderSelect}
               onToggleFolderExpand={onToggleFolderExpand}
               onEnsureFolderExpanded={onEnsureFolderExpanded}
               onCreateFolderStart={onCreateFolderStart}
@@ -289,7 +286,6 @@ export function SidebarFoldersSection({
   renameValue,
   folderColors,
   onToggleFoldersOpen,
-  onFolderSelect,
   onToggleFolderExpand,
   onEnsureFolderExpanded,
   onCreateFolderStart,
@@ -341,7 +337,6 @@ export function SidebarFoldersSection({
               renamingFolder={renamingFolder}
               renameValue={renameValue}
               folderColors={folderColors}
-              onFolderSelect={onFolderSelect}
               onToggleFolderExpand={onToggleFolderExpand}
               onEnsureFolderExpanded={onEnsureFolderExpanded}
               onCreateFolderStart={onCreateFolderStart}

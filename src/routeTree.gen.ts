@@ -9,54 +9,157 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as SharedFolderIdRouteImport } from './routes/shared.$folderId'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as SharedFolderIdRouteImport } from './routes/shared/$folderId'
+import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
+import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as AuthenticatedTagTagIdRouteImport } from './routes/_authenticated/tag/$tagId'
+import { Route as AuthenticatedFolderFolderIdRouteImport } from './routes/_authenticated/folder/$folderId'
+import { Route as AuthenticatedDocumentDocumentIdRouteImport } from './routes/_authenticated/document/$documentId'
 
-const IndexRoute = IndexRouteImport.update({
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const SharedFolderIdRoute = SharedFolderIdRouteImport.update({
   id: '/shared/$folderId',
   path: '/shared/$folderId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedTrashRoute = AuthenticatedTrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedTagTagIdRoute = AuthenticatedTagTagIdRouteImport.update({
+  id: '/tag/$tagId',
+  path: '/tag/$tagId',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedFolderFolderIdRoute =
+  AuthenticatedFolderFolderIdRouteImport.update({
+    id: '/folder/$folderId',
+    path: '/folder/$folderId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedDocumentDocumentIdRoute =
+  AuthenticatedDocumentDocumentIdRouteImport.update({
+    id: '/document/$documentId',
+    path: '/document/$documentId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/login': typeof LoginRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/trash': typeof AuthenticatedTrashRoute
   '/shared/$folderId': typeof SharedFolderIdRoute
+  '/document/$documentId': typeof AuthenticatedDocumentDocumentIdRoute
+  '/folder/$folderId': typeof AuthenticatedFolderFolderIdRoute
+  '/tag/$tagId': typeof AuthenticatedTagTagIdRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/search': typeof AuthenticatedSearchRoute
+  '/trash': typeof AuthenticatedTrashRoute
   '/shared/$folderId': typeof SharedFolderIdRoute
+  '/': typeof AuthenticatedIndexRoute
+  '/document/$documentId': typeof AuthenticatedDocumentDocumentIdRoute
+  '/folder/$folderId': typeof AuthenticatedFolderFolderIdRoute
+  '/tag/$tagId': typeof AuthenticatedTagTagIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/login': typeof LoginRoute
+  '/_authenticated/search': typeof AuthenticatedSearchRoute
+  '/_authenticated/trash': typeof AuthenticatedTrashRoute
   '/shared/$folderId': typeof SharedFolderIdRoute
+  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/document/$documentId': typeof AuthenticatedDocumentDocumentIdRoute
+  '/_authenticated/folder/$folderId': typeof AuthenticatedFolderFolderIdRoute
+  '/_authenticated/tag/$tagId': typeof AuthenticatedTagTagIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/shared/$folderId'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/search'
+    | '/trash'
+    | '/shared/$folderId'
+    | '/document/$documentId'
+    | '/folder/$folderId'
+    | '/tag/$tagId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/shared/$folderId'
-  id: '__root__' | '/' | '/shared/$folderId'
+  to:
+    | '/login'
+    | '/search'
+    | '/trash'
+    | '/shared/$folderId'
+    | '/'
+    | '/document/$documentId'
+    | '/folder/$folderId'
+    | '/tag/$tagId'
+  id:
+    | '__root__'
+    | '/_authenticated'
+    | '/login'
+    | '/_authenticated/search'
+    | '/_authenticated/trash'
+    | '/shared/$folderId'
+    | '/_authenticated/'
+    | '/_authenticated/document/$documentId'
+    | '/_authenticated/folder/$folderId'
+    | '/_authenticated/tag/$tagId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  LoginRoute: typeof LoginRoute
   SharedFolderIdRoute: typeof SharedFolderIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/': {
-      id: '/'
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/': {
+      id: '/_authenticated/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/shared/$folderId': {
       id: '/shared/$folderId'
@@ -65,11 +168,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SharedFolderIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/trash': {
+      id: '/_authenticated/trash'
+      path: '/trash'
+      fullPath: '/trash'
+      preLoaderRoute: typeof AuthenticatedTrashRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/search': {
+      id: '/_authenticated/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AuthenticatedSearchRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/tag/$tagId': {
+      id: '/_authenticated/tag/$tagId'
+      path: '/tag/$tagId'
+      fullPath: '/tag/$tagId'
+      preLoaderRoute: typeof AuthenticatedTagTagIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/folder/$folderId': {
+      id: '/_authenticated/folder/$folderId'
+      path: '/folder/$folderId'
+      fullPath: '/folder/$folderId'
+      preLoaderRoute: typeof AuthenticatedFolderFolderIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/document/$documentId': {
+      id: '/_authenticated/document/$documentId'
+      path: '/document/$documentId'
+      fullPath: '/document/$documentId'
+      preLoaderRoute: typeof AuthenticatedDocumentDocumentIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
+interface AuthenticatedRouteChildren {
+  AuthenticatedSearchRoute: typeof AuthenticatedSearchRoute
+  AuthenticatedTrashRoute: typeof AuthenticatedTrashRoute
+  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedDocumentDocumentIdRoute: typeof AuthenticatedDocumentDocumentIdRoute
+  AuthenticatedFolderFolderIdRoute: typeof AuthenticatedFolderFolderIdRoute
+  AuthenticatedTagTagIdRoute: typeof AuthenticatedTagTagIdRoute
+}
+
+const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedSearchRoute: AuthenticatedSearchRoute,
+  AuthenticatedTrashRoute: AuthenticatedTrashRoute,
+  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedDocumentDocumentIdRoute: AuthenticatedDocumentDocumentIdRoute,
+  AuthenticatedFolderFolderIdRoute: AuthenticatedFolderFolderIdRoute,
+  AuthenticatedTagTagIdRoute: AuthenticatedTagTagIdRoute,
+}
+
+const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
+  AuthenticatedRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  LoginRoute: LoginRoute,
   SharedFolderIdRoute: SharedFolderIdRoute,
 }
 export const routeTree = rootRouteImport

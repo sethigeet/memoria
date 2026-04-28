@@ -1,17 +1,11 @@
-import { useState } from "react";
-import { useQuery, useMutation, useAction } from "convex/react";
+import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
+import { useQuery } from "convex/react";
 import { api, type Id } from "#/lib/convex";
-import { ChatPane } from "./chat-pane";
+import { ChatPane } from "#/components/document/chat-pane";
+import { DocumentSummary } from "#/components/document/document-summary";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "#/components/ui/select";
 import {
   ArrowLeft,
   Share,
@@ -19,24 +13,30 @@ import {
   Link as LinkIcon,
   Sparkles,
   BookOpen,
-  Wand2,
   Loader2,
 } from "lucide-react";
 
-interface DocumentViewProps {
-  documentId: Id<"documents">;
-  onBack: () => void;
-}
+export const Route = createFileRoute("/_authenticated/document/$documentId")({
+  component: DocumentRoute,
+});
 
-export function DocumentView({ documentId, onBack }: DocumentViewProps) {
+const formatDate = (timestamp: number) => {
+  return new Date(timestamp).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
+function DocumentRoute() {
+  const navigate = useNavigate();
+  const documentId = useParams({
+    from: "/_authenticated/document/$documentId",
+    select: (p) => p.documentId as Id<"documents">,
+  });
   const document = useQuery(api.documents.get, { id: documentId });
-  const [summaryType, setSummaryType] = useState<"concise" | "detailed" | "action-items">(
-    "concise",
-  );
-  const [generating, setGenerating] = useState(false);
 
-  const updateDocument = useMutation(api.documents.update);
-  const generateSummary = useAction(api.ai.generateSummary);
+  const onBack = () => navigate({ to: "/" });
 
   if (!document) {
     return (
@@ -45,37 +45,6 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
       </div>
     );
   }
-
-  const handleGenerateSummary = async () => {
-    setGenerating(true);
-    try {
-      await generateSummary({
-        documentId,
-        content: document.content,
-        summaryType,
-      });
-    } catch (error) {
-      console.error("Failed to generate summary:", error);
-    } finally {
-      setGenerating(false);
-    }
-  };
-
-  const clearSummary = async () => {
-    await updateDocument({
-      id: documentId,
-      summary: undefined,
-      summaryType: undefined,
-    });
-  };
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
 
   const typeConfig = {
     web: { label: "Web", className: "type-badge-web" },
@@ -87,7 +56,6 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
 
   return (
     <div className="flex-1 h-screen flex flex-col overflow-hidden">
-      {/* Topbar */}
       <div className="px-4 h-[50px] border-b border-border flex items-center gap-2.5 shrink-0 bg-[#0e0e12]">
         <Button variant="outline" size="icon" className="w-7 h-7" onClick={onBack}>
           <ArrowLeft className="w-3.5 h-3.5" />
@@ -112,11 +80,8 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
         </div>
       </div>
 
-      {/* Body */}
       <div className="flex-1 flex min-h-0">
-        {/* Left: Content */}
         <div className="w-[62%] border-r border-border flex flex-col min-h-0 pb-5 overflow-y-auto">
-          {/* Meta header */}
           <div className="px-7 pt-5 pb-3 shrink-0">
             <div className="flex items-center gap-1.5 mb-2.5">
               {document.folder && (
@@ -164,69 +129,13 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
             )}
           </div>
 
-          {/* Summary bar */}
-          <div className="px-7 py-3 border-y border-border shrink-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Select
-                value={summaryType}
-                onValueChange={(v) => setSummaryType(v as typeof summaryType)}
-              >
-                <SelectTrigger className="w-[130px] h-8 text-[12px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="concise">Concise</SelectItem>
-                  <SelectItem value="detailed">Detailed</SelectItem>
-                  <SelectItem value="action-items">Action Items</SelectItem>
-                </SelectContent>
-              </Select>
+          <DocumentSummary
+            documentId={documentId}
+            content={document.content}
+            summary={document.summary}
+            summaryType={document.summaryType}
+          />
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleGenerateSummary}
-                disabled={generating}
-                className="gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
-              >
-                {generating ? (
-                  <>
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-3 h-3" />
-                    Generate Summary
-                  </>
-                )}
-              </Button>
-
-              {document.summary && (
-                <button
-                  onClick={clearSummary}
-                  className="ml-auto text-[12px] text-muted-foreground hover:text-foreground"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {document.summary && (
-              <div className="mt-3 p-3.5 rounded-lg bg-primary/5 border border-primary/20">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Sparkles className="w-3 h-3 text-primary" />
-                  <span className="text-[10.5px] font-bold tracking-wider uppercase text-primary">
-                    {document.summaryType} Summary
-                  </span>
-                </div>
-                <div className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap">
-                  {document.summary}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Article content */}
           <div className="flex-1 min-h-0 px-7 py-5">
             <div className="text-[14px] text-muted-foreground leading-[1.8] max-w-[640px] whitespace-pre-wrap">
               {document.content}
@@ -234,7 +143,6 @@ export function DocumentView({ documentId, onBack }: DocumentViewProps) {
           </div>
         </div>
 
-        {/* Right: Chat/Notebook */}
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="w-full justify-start rounded-none border-b border-border bg-[#0e0e12] h-auto p-0 px-3.5">

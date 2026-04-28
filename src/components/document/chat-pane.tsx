@@ -29,11 +29,7 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
     setLoading(true);
 
     try {
-      await chatAction({
-        documentId,
-        content,
-        question,
-      });
+      await chatAction({ documentId, content, question });
     } catch (error) {
       console.error("Chat error:", error);
     } finally {
@@ -81,9 +77,7 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
           messages.map((msg) => (
             <div
               key={msg._id}
-              className={`mb-3.5 flex flex-col ${
-                msg.role === "user" ? "items-end" : "items-start"
-              }`}
+              className={`mb-3.5 flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
             >
               {msg.role === "assistant" && (
                 <div className="flex items-center gap-1.5 mb-1.5">
@@ -121,9 +115,7 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
                 <div
                   key={i}
                   className="w-1.5 h-1.5 rounded-full bg-muted-foreground"
-                  style={{
-                    animation: `typingDot 1.2s ${i * 0.2}s infinite ease-in-out`,
-                  }}
+                  style={{ animation: `typingDot 1.2s ${i * 0.2}s infinite ease-in-out` }}
                 />
               ))}
             </div>
@@ -133,7 +125,6 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
         <div ref={endRef} />
       </div>
 
-      {/* Input */}
       <div className="p-3 border-t border-border shrink-0">
         <div className="flex gap-2 items-end bg-secondary/30 border border-border rounded-lg p-1.5 pl-3">
           <Textarea

@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import type { Id } from "#/lib/convex";
 import { ChevronDown, ChevronRight, Tag } from "lucide-react";
 import type { TagListItem } from "./types";
@@ -7,8 +8,6 @@ interface SidebarTagsSectionProps {
   tags: TagListItem[];
   activeTag?: Id<"tags">;
   onToggleTagsOpen: () => void;
-  onTagSelect: (id: Id<"tags"> | null) => void;
-  onFolderSelect: (id: Id<"folders"> | null) => void;
 }
 
 export function SidebarTagsSection({
@@ -16,8 +15,6 @@ export function SidebarTagsSection({
   tags,
   activeTag,
   onToggleTagsOpen,
-  onTagSelect,
-  onFolderSelect,
 }: SidebarTagsSectionProps) {
   return (
     <div className="mt-2">
@@ -35,12 +32,10 @@ export function SidebarTagsSection({
 
       {tagsOpen &&
         tags.map((tag) => (
-          <button
+          <Link
             key={tag._id}
-            onClick={() => {
-              onTagSelect(activeTag === tag._id ? null : tag._id);
-              onFolderSelect(null);
-            }}
+            to="/tag/$tagId"
+            params={{ tagId: tag._id }}
             className={`w-full flex items-center gap-2 px-2.5 py-1.5 pl-6 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 ${
               activeTag === tag._id
                 ? "bg-primary/10 text-primary"
@@ -49,7 +44,7 @@ export function SidebarTagsSection({
           >
             <Tag className="w-3 h-3" />
             <span>{tag.name}</span>
-          </button>
+          </Link>
         ))}
     </div>
   );
