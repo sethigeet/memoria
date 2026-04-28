@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { action } from "./_generated/server";
-import { api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { generateText, Output } from "ai";
 import { z } from "zod";
@@ -10,12 +10,11 @@ import { z } from "zod";
 const nim = createOpenAICompatible({
   name: "nim",
   baseURL: "https://integrate.api.nvidia.com/v1",
-  headers: {
-    Authorization: `Bearer ${process.env.NIM_API_KEY}`,
-  },
+  apiKey: process.env.NIM_API_KEY,
 });
 
-const model = nim.chatModel("deepseek-ai/deepseek-v4-flash");
+// const model = nim.chatModel("deepseek-ai/deepseek-v4-flash");
+const model = nim.chatModel("moonshotai/kimi-k2-instruct-0905");
 
 export const generateTitleAndTags = action({
   args: {
@@ -44,13 +43,13 @@ Generate a concise title and 3-5 relevant tags for categorization.`,
     });
 
     // Update the document with the generated title
-    await ctx.runMutation(api.documents.update, {
+    await ctx.runMutation(internal.documents.internalUpdate, {
       id: args.documentId,
       title: result.output.title,
     });
 
     // Add the generated tags
-    await ctx.runMutation(api.documents.addTags, {
+    await ctx.runMutation(internal.documents.internalAddTags, {
       documentId: args.documentId,
       tags: result.output.tags,
     });
@@ -88,7 +87,7 @@ ${args.content}`,
     });
 
     // Save the summary to the document
-    await ctx.runMutation(api.documents.update, {
+    await ctx.runMutation(internal.documents.internalUpdate, {
       id: args.documentId,
       summary: text,
       summaryType: args.summaryType,
@@ -115,13 +114,13 @@ Question: ${args.question}`,
     });
 
     // Save both the question and answer to chat history
-    await ctx.runMutation(api.chat.addMessage, {
+    await ctx.runMutation(internal.chat.internalAddMessage, {
       documentId: args.documentId,
       role: "user",
       content: args.question,
     });
 
-    await ctx.runMutation(api.chat.addMessage, {
+    await ctx.runMutation(internal.chat.internalAddMessage, {
       documentId: args.documentId,
       role: "assistant",
       content: text,

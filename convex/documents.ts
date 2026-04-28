@@ -1,7 +1,8 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation, MutationCtx } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { Id } from "./_generated/dataModel";
 
 export const list = query({
   args: {
@@ -158,14 +159,39 @@ export const createFromUrl = mutation({
   },
 });
 
+async function updateDocumentHelper(
+  ctx: MutationCtx,
+  id: Id<"documents">,
+  args: {
+    title?: string;
+    content?: string;
+    folderId?: Id<"folders">;
+    summary?: string | null;
+    summaryType?: string | null;
+  },
+) {
+  const updates: Record<string, unknown> = {};
+  if (args.title !== undefined) updates.title = args.title;
+  if (args.content !== undefined) {
+    updates.content = args.content;
+    updates.excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
+  }
+  if (args.folderId !== undefined) updates.folderId = args.folderId;
+  if (args.summary !== undefined) updates.summary = args.summary ?? undefined;
+  if (args.summaryType !== undefined) updates.summaryType = args.summaryType ?? undefined;
+
+  await ctx.db.patch(id, updates);
+  return id;
+}
+
 export const update = mutation({
   args: {
     id: v.id("documents"),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
     folderId: v.optional(v.id("folders")),
-    summary: v.optional(v.string()),
-    summaryType: v.optional(v.string()),
+    summary: v.optional(v.union(v.string(), v.null())),
+    summaryType: v.optional(v.union(v.string(), v.null())),
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
@@ -176,18 +202,21 @@ export const update = mutation({
       throw new Error("Document not found");
     }
 
-    const updates: Record<string, unknown> = {};
-    if (args.title !== undefined) updates.title = args.title;
-    if (args.content !== undefined) {
-      updates.content = args.content;
-      updates.excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
-    }
-    if (args.folderId !== undefined) updates.folderId = args.folderId;
-    if (args.summary !== undefined) updates.summary = args.summary;
-    if (args.summaryType !== undefined) updates.summaryType = args.summaryType;
+    return await updateDocumentHelper(ctx, args.id, args);
+  },
+});
 
-    await ctx.db.patch(args.id, updates);
-    return args.id;
+export const internalUpdate = internalMutation({
+  args: {
+    id: v.id("documents"),
+    title: v.optional(v.string()),
+    summary: v.optional(v.union(v.string(), v.null())),
+    summaryType: v.optional(v.union(v.string(), v.null())),
+  },
+  handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.id);
+    if (!doc) throw new Error("Document not found");
+    return await updateDocumentHelper(ctx, args.id, args);
   },
 });
 
@@ -319,6 +348,37 @@ export const listTrash = query({
   },
 });
 
+async function addTagsHelper(
+  ctx: MutationCtx,
+  documentId: Id<"documents">,
+  tags: string[],
+  userId: string,
+) {
+  for (const tagName of tags) {
+    let tag = await ctx.db
+      .query("tags")
+      .withIndex("by_name_and_userId", (q) => q.eq("name", tagName).eq("userId", userId))
+      .unique();
+
+    if (!tag) {
+      const tagId = await ctx.db.insert("tags", { name: tagName, userId });
+      tag = await ctx.db.get(tagId);
+    }
+
+    if (tag) {
+      const existing = await ctx.db
+        .query("documentTags")
+        .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+        .filter((q) => q.eq(q.field("tagId"), tag!._id))
+        .unique();
+
+      if (!existing) {
+        await ctx.db.insert("documentTags", { documentId, tagId: tag._id });
+      }
+    }
+  }
+}
+
 export const addTags = mutation({
   args: {
     documentId: v.id("documents"),
@@ -333,36 +393,18 @@ export const addTags = mutation({
       throw new Error("Document not found");
     }
 
-    for (const tagName of args.tags) {
-      // Find or create tag
-      let tag = await ctx.db
-        .query("tags")
-        .withIndex("by_name_and_userId", (q) => q.eq("name", tagName).eq("userId", userId))
-        .unique();
+    await addTagsHelper(ctx, args.documentId, args.tags, userId);
+  },
+});
 
-      if (!tag) {
-        const tagId = await ctx.db.insert("tags", {
-          name: tagName,
-          userId,
-        });
-        tag = await ctx.db.get(tagId);
-      }
-
-      if (tag) {
-        // Check if relation already exists
-        const existing = await ctx.db
-          .query("documentTags")
-          .withIndex("by_documentId", (q) => q.eq("documentId", args.documentId))
-          .filter((q) => q.eq(q.field("tagId"), tag!._id))
-          .unique();
-
-        if (!existing) {
-          await ctx.db.insert("documentTags", {
-            documentId: args.documentId,
-            tagId: tag._id,
-          });
-        }
-      }
-    }
+export const internalAddTags = internalMutation({
+  args: {
+    documentId: v.id("documents"),
+    tags: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc) throw new Error("Document not found");
+    await addTagsHelper(ctx, args.documentId, args.tags, doc.userId);
   },
 });

@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const getMessages = query({
@@ -45,7 +45,7 @@ export const addMessage = mutation({
       documentId: args.documentId,
       role: args.role,
       content: args.content,
-      userId,
+      userId: userId,
     });
   },
 });
@@ -69,5 +69,24 @@ export const clearMessages = mutation({
     for (const msg of messages) {
       await ctx.db.delete(msg._id);
     }
+  },
+});
+
+export const internalAddMessage = internalMutation({
+  args: {
+    documentId: v.id("documents"),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc) throw new Error("Document not found");
+
+    return await ctx.db.insert("chatMessages", {
+      documentId: args.documentId,
+      role: args.role,
+      content: args.content,
+      userId: doc.userId,
+    });
   },
 });

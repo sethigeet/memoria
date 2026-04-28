@@ -61,8 +61,8 @@ export function DocumentSummary({
     try {
       await updateDocument({
         id: documentId,
-        summary: undefined,
-        summaryType: undefined,
+        summary: null,
+        summaryType: null,
       });
     } finally {
       setClearing(false);
