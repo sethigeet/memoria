@@ -136,7 +136,7 @@ export const createFromUrl = mutation({
     if (!userId) throw new Error("Not authenticated");
 
     const url = args.url.startsWith("http") ? args.url : `https://${args.url}`;
-    const source = new URL(url).hostname;
+    const source = url;
 
     const documentId = await ctx.db.insert("documents", {
       type: "web",
