@@ -33,7 +33,7 @@ function AuthScreen() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0e0e12] p-4">
-      <div className="w-full max-w-md p-8 rounded-2xl bg-card border border-border animate-slide-up">
+      <div className="w-full max-w-md p-8 rounded-2xl bg-card border border-border animate-in fade-in slide-in-from-bottom-3 duration-200">
         {mode === "signIn" ? (
           <SignInForm onToggle={() => setMode("signUp")} />
         ) : (

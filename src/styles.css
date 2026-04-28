@@ -116,74 +116,59 @@ body {
   background: #38383f;
 }
 
-/* Animations */
-@keyframes fadeIn {
-  from {
+@theme {
+  --animate-shimmer: shimmer 2.5s ease-in-out infinite;
+  --animate-scan: scan-line 2.4s ease-in-out infinite;
+  --animate-glow-pulse: glow-pulse 2.4s ease-in-out infinite;
+  --animate-soft-pulse: soft-pulse 2s ease-in-out infinite;
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+  }
+    100% {
+      background-position: -200% 0;
+  }
+}
+
+  @keyframes scan-line {
+    0% {
+      transform: translateY(0);
     opacity: 0;
   }
-  to {
+    10% {
     opacity: 1;
+    }
+    80% {
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(140px);
+      opacity: 0;
   }
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@keyframes typingDot {
+  @keyframes glow-pulse {
   0%,
   100% {
-    opacity: 0.3;
-    transform: scale(0.8);
+      opacity: 0.4;
+      transform: scale(1);
   }
   50% {
     opacity: 1;
-    transform: scale(1.1);
+      transform: scale(1.08);
   }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.15s ease;
-}
-
-.animate-slide-up {
-  animation: slideUp 0.2s ease;
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* Type badges */
-.type-badge-web {
-  background: rgba(59, 130, 246, 0.13);
-  color: #3b82f6;
-  border: 1px solid rgba(59, 130, 246, 0.21);
-}
-
-.type-badge-pdf {
-  background: rgba(239, 68, 68, 0.13);
-  color: #ef4444;
-  border: 1px solid rgba(239, 68, 68, 0.21);
-}
-
-.type-badge-note {
-  background: rgba(167, 139, 250, 0.13);
-  color: #a78bfa;
-  border: 1px solid rgba(167, 139, 250, 0.21);
+  @keyframes soft-pulse {
+    0%,
+    100% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
 }
 
 @layer base {

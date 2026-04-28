@@ -14,6 +14,12 @@ import {
   Sparkles,
   BookOpen,
   Loader2,
+  AlertTriangle,
+  RotateCcw,
+  Trash2,
+  Globe,
+  FileText,
+  Check,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/document/$documentId")({
@@ -47,9 +53,18 @@ function DocumentRoute() {
   }
 
   const typeConfig = {
-    web: { label: "Web", className: "type-badge-web" },
-    pdf: { label: "PDF", className: "type-badge-pdf" },
-    note: { label: "Note", className: "type-badge-note" },
+    web: {
+      label: "Web",
+      className: "bg-blue-500/15 text-blue-500 border border-blue-500/20",
+    },
+    pdf: {
+      label: "PDF",
+      className: "bg-red-500/15 text-red-500 border border-red-500/20",
+    },
+    note: {
+      label: "Note",
+      className: "bg-violet-400/15 text-violet-400 border border-violet-400/20",
+    },
   };
 
   const config = typeConfig[document.type];
@@ -138,13 +153,64 @@ function DocumentRoute() {
 
           <div className="flex-1 min-h-0 px-7 py-5">
             {document.scrapingStatus === "pending" || document.scrapingStatus === "processing" ? (
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span className="text-[14px]">Extracting content...</span>
+              <div className="mx-auto flex max-w-md flex-col items-center justify-center py-16 text-center">
+                <div className="relative mb-7 flex h-24 w-24 items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-sky-500/20 blur-2xl animate-glow-pulse" />
+                  <div className="absolute inset-2 rounded-full border border-sky-500/30 bg-linear-to-br from-sky-500/15 to-sky-500/5" />
+                  <div className="absolute inset-0 rounded-full border border-sky-400/40 border-t-transparent animate-spin animation-duration-[3s]" />
+                  <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border border-sky-500/30 bg-card shadow-[0_0_24px_rgba(56,189,248,0.25)]">
+                    <Globe className="h-6 w-6 text-sky-400" />
+                  </div>
+                </div>
+                <h3 className="mb-2 text-[18px] font-bold tracking-tight text-foreground">
+                  Extracting Content
+                </h3>
+                <p className="mb-7 text-[13px] leading-relaxed text-muted-foreground">
+                  Analyzing and extracting the main content from this webpage. This usually takes a few seconds.
+                </p>
+                <div className="flex w-full max-w-xs flex-col gap-2">
+                  <div className="flex items-center gap-2.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[12px] text-emerald-300">
+                    <Check className="h-4 w-4 shrink-0" />
+                    <span>Fetching webpage</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 rounded-md border border-sky-500/30 bg-sky-500/8 px-3 py-2 text-[12px] text-sky-200">
+                    <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+                    <span>Parsing HTML structure</span>
+                  </div>
+                  <div className="flex items-center gap-2.5 rounded-md border border-border bg-secondary/30 px-3 py-2 text-[12px] text-muted-foreground/60">
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span>Extracting main content</span>
+                  </div>
+                </div>
               </div>
             ) : document.scrapingStatus === "failed" ? (
-              <div className="text-destructive text-[14px]">
-                Failed to extract content: {document.scrapingError || "Unknown error"}
+              <div className="mx-auto flex max-w-md flex-col items-center justify-center py-16 text-center">
+                <div className="relative mb-7 flex h-24 w-24 items-center justify-center">
+                  <div className="absolute inset-0 rounded-full bg-red-500/20 blur-2xl animate-glow-pulse" />
+                  <div className="absolute inset-2 rounded-full border border-red-500/30 bg-linear-to-br from-red-500/15 to-red-500/5" />
+                  <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-full border border-red-500/30 bg-card shadow-[0_0_24px_rgba(239,68,68,0.25)]">
+                    <AlertTriangle className="h-6 w-6 text-red-400" />
+                  </div>
+                </div>
+                <h3 className="mb-2 text-[18px] font-bold tracking-tight text-foreground">
+                  Content Extraction Failed
+                </h3>
+                <div className="mb-7 rounded-md border border-red-500/15 bg-red-500/6 px-4 py-3 text-[13px] leading-relaxed text-red-200/80">
+                  {document.scrapingError || "We couldn't extract content from this URL. The page might be protected, require authentication, or use a format we don't support yet."}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button className="inline-flex items-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/10 px-3.5 py-2 text-[12px] font-medium text-red-200 transition-all hover:border-red-500/50 hover:bg-red-500/20 hover:text-red-100">
+                    <RotateCcw className="h-3.5 w-3.5" />
+                    Try Again
+                  </button>
+                  <button
+                    onClick={onBack}
+                    className="inline-flex items-center gap-1.5 rounded-md border border-border bg-secondary/40 px-3.5 py-2 text-[12px] font-medium text-muted-foreground transition-all hover:border-border hover:bg-secondary hover:text-foreground"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Remove
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="text-[14px] text-muted-foreground leading-[1.8] max-w-[640px] whitespace-pre-wrap">
