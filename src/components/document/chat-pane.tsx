@@ -3,7 +3,8 @@ import { useQuery, useAction } from "convex/react";
 import { api, type Id } from "#/lib/convex";
 import { Button } from "#/components/ui/button";
 import { Textarea } from "#/components/ui/textarea";
-import { Sparkles, Send } from "lucide-react";
+import { Logo } from "#/components/ui/logo";
+import { Send } from "lucide-react";
 import { Markdown } from "#/components/document/markdown-content";
 
 interface ChatPaneProps {
@@ -56,8 +57,8 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
       <div className="flex-1 overflow-auto px-4 pt-4 pb-2">
         {messages.length === 0 ? (
           <div className="max-w-[240px] mx-auto text-center mt-9">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center mx-auto mb-3.5">
-              <Sparkles className="w-4.5 h-4.5 text-primary" />
+            <div className="w-10 h-10 flex items-center justify-center mx-auto mb-3.5">
+              <Logo size={40} />
             </div>
             <p className="text-[13px] text-muted-foreground leading-relaxed">
               Ask anything about this document. The AI answers using only its content.
@@ -82,11 +83,9 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
             >
               {msg.role === "assistant" && (
                 <div className="flex items-center gap-1.5 mb-1.5">
-                  <div className="w-4.5 h-4.5 rounded bg-primary/15 flex items-center justify-center">
-                    <Sparkles className="w-2.5 h-2.5 text-primary" />
-                  </div>
+                  <Logo size={16} />
                   <span className="text-[11px] font-semibold text-muted-foreground tracking-wide">
-                    Memoria AI
+                    Memoria
                   </span>
                 </div>
               )}
@@ -112,10 +111,8 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
         {loading && (
           <div className="mb-3">
             <div className="flex items-center gap-1.5 mb-1.5">
-              <div className="w-4.5 h-4.5 rounded bg-primary/15 flex items-center justify-center">
-                <Sparkles className="w-2.5 h-2.5 text-primary" />
-              </div>
-              <span className="text-[11px] font-semibold text-muted-foreground">Memoria AI</span>
+              <Logo size={16} />
+              <span className="text-[11px] font-semibold text-muted-foreground">Memoria</span>
             </div>
             <div className="flex gap-1 px-3 py-2.5 rounded-[3px_10px_10px_10px] bg-secondary/50 border border-border w-fit">
               {[0, 1, 2].map((i) => (
