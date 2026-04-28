@@ -4,6 +4,7 @@ import { api, type Id } from "#/lib/convex";
 import { Button } from "#/components/ui/button";
 import { Textarea } from "#/components/ui/textarea";
 import { Sparkles, Send } from "lucide-react";
+import { Markdown } from "#/components/document/markdown-content";
 
 interface ChatPaneProps {
   documentId: Id<"documents">;
@@ -90,13 +91,19 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
                 </div>
               )}
               <div
-                className={`max-w-[88%] px-3.5 py-2.5 text-[13px] leading-relaxed whitespace-pre-wrap ${
+                className={`max-w-[88%] px-3.5 py-2.5 ${
                   msg.role === "user"
                     ? "rounded-[10px_10px_3px_10px] bg-primary/15 border border-primary/25 text-foreground/90"
                     : "rounded-[3px_10px_10px_10px] bg-secondary/50 border border-border text-foreground/80"
                 }`}
               >
-                {msg.content}
+                {msg.role === "user" ? (
+                  <div className="text-[13px] leading-relaxed whitespace-pre-wrap">
+                    {msg.content}
+                  </div>
+                ) : (
+                  <Markdown compact>{msg.content}</Markdown>
+                )}
               </div>
             </div>
           ))

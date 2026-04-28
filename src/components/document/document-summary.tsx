@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "#/components/ui/select";
 import { Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Markdown } from "#/components/document/markdown-content";
 
 type SummaryType = "concise" | "detailed" | "action-items";
 
@@ -107,9 +108,9 @@ export function DocumentSummary({
               {generatedSummaryType} Summary
             </span>
           </div>
-          <div className="text-[13px] text-foreground/80 leading-relaxed whitespace-pre-wrap">
+          <Markdown compact className="text-foreground/80">
             {summary}
-          </div>
+          </Markdown>
         </div>
       )}
     </div>

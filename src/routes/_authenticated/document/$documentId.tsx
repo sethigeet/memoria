@@ -3,6 +3,7 @@ import { useQuery } from "convex/react";
 import { api, type Id } from "#/lib/convex";
 import { ChatPane } from "#/components/document/chat-pane";
 import { DocumentSummary } from "#/components/document/document-summary";
+import { Markdown } from "#/components/document/markdown-content";
 import { Button } from "#/components/ui/button";
 import { Badge } from "#/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
@@ -213,9 +214,7 @@ function DocumentRoute() {
                 </div>
               </div>
             ) : (
-              <div className="text-[14px] text-muted-foreground leading-[1.8] max-w-[640px] whitespace-pre-wrap">
-                {document.content}
-              </div>
+              <Markdown className="max-w-[680px]">{document.content}</Markdown>
             )}
           </div>
         </div>
