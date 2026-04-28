@@ -15,6 +15,8 @@ import type * as crons from "../crons.js";
 import type * as documents from "../documents.js";
 import type * as folders from "../folders.js";
 import type * as http from "../http.js";
+import type * as scraping from "../scraping.js";
+import type * as scrapingHelpers from "../scrapingHelpers.js";
 import type * as tags from "../tags.js";
 import type * as trash from "../trash.js";
 
@@ -32,6 +34,8 @@ declare const fullApi: ApiFromModules<{
   documents: typeof documents;
   folders: typeof folders;
   http: typeof http;
+  scraping: typeof scraping;
+  scrapingHelpers: typeof scrapingHelpers;
   tags: typeof tags;
   trash: typeof trash;
 }>;

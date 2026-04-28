@@ -137,9 +137,20 @@ function DocumentRoute() {
           />
 
           <div className="flex-1 min-h-0 px-7 py-5">
-            <div className="text-[14px] text-muted-foreground leading-[1.8] max-w-[640px] whitespace-pre-wrap">
-              {document.content}
-            </div>
+            {document.scrapingStatus === "pending" || document.scrapingStatus === "processing" ? (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-[14px]">Extracting content...</span>
+              </div>
+            ) : document.scrapingStatus === "failed" ? (
+              <div className="text-destructive text-[14px]">
+                Failed to extract content: {document.scrapingError || "Unknown error"}
+              </div>
+            ) : (
+              <div className="text-[14px] text-muted-foreground leading-[1.8] max-w-[640px] whitespace-pre-wrap">
+                {document.content}
+              </div>
+            )}
           </div>
         </div>
 

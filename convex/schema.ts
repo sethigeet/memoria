@@ -32,6 +32,16 @@ export default defineSchema({
     // AI-generated fields
     summary: v.optional(v.string()),
     summaryType: v.optional(v.string()),
+    // Scraping status
+    scrapingStatus: v.optional(
+      v.union(
+        v.literal("pending"),
+        v.literal("processing"),
+        v.literal("completed"),
+        v.literal("failed"),
+      ),
+    ),
+    scrapingError: v.optional(v.string()),
   })
     .index("by_userId", ["userId"])
     .index("by_folderId", ["folderId"])

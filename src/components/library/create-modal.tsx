@@ -46,6 +46,7 @@ export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps
 
   const folders = useQuery(api.folders.list) ?? [];
   const createDocument = useMutation(api.documents.create);
+  const createFromUrl = useMutation(api.documents.createFromUrl);
   const generateTitleAndTags = useAction(api.ai.generateTitleAndTags);
 
   const flatFolders = useMemo(() => {
@@ -74,38 +75,28 @@ export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps
     setProcessing(true);
 
     try {
-      let docContent = content;
-      let docSource: string | undefined;
-      let docTitle = title;
-      let docType: "web" | "pdf" | "note" = "note";
-
       if (tab === "url" && url) {
-        docType = "web";
-        docSource = new URL(url.startsWith("http") ? url : `https://${url}`).hostname;
-        docContent = `Content from ${url}\n\n[Note: URL scraping would happen here in production]`;
-        docTitle = docTitle || url;
-      } else if (tab === "pdf") {
-        docType = "pdf";
-        docTitle = "Uploaded PDF";
-      }
+        await createFromUrl({
+          url,
+          folderId: folderId ? (folderId as Id<"folders">) : undefined,
+        });
+      } else if (tab === "note") {
+        const documentId = await createDocument({
+          type: "note",
+          title: title || "Untitled",
+          content,
+          folderId: folderId ? (folderId as Id<"folders">) : undefined,
+        });
 
-      const documentId = await createDocument({
-        type: docType,
-        title: docTitle || "Untitled",
-        content: docContent,
-        source: docSource,
-        folderId: folderId ? (folderId as Id<"folders">) : undefined,
-      });
-
-      // Generate title and tags using AI
-      if (docContent.length > 50) {
-        try {
-          await generateTitleAndTags({
-            documentId,
-            content: docContent,
-          });
-        } catch (e) {
-          console.error("Failed to generate title/tags:", e);
+        if (content.length > 50) {
+          try {
+            await generateTitleAndTags({
+              documentId,
+              content,
+            });
+          } catch (e) {
+            console.error("Failed to generate title/tags:", e);
+          }
         }
       }
 
@@ -195,13 +186,13 @@ export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps
           )}
 
           {tab === "pdf" && (
-            <div className="border-2 border-dashed border-border rounded-xl p-9 text-center cursor-pointer hover:border-muted-foreground/30 transition-colors">
+            <div className="border-2 border-dashed border-border rounded-xl p-9 text-center">
               <FileText className="w-8 h-8 mx-auto mb-3 text-muted-foreground/50" />
               <div className="text-[14px] text-muted-foreground font-medium mb-1.5">
-                Drop PDF here or click to upload
+                PDF Upload - Work in Progress
               </div>
               <div className="text-[12px] text-muted-foreground/60">
-                Supports PDF files up to 50 MB
+                For now, use the URL tab to import PDFs via link
               </div>
             </div>
           )}

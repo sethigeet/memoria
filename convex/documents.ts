@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
@@ -119,6 +120,38 @@ export const create = mutation({
       excerpt,
       folderId: args.folderId,
       userId,
+    });
+
+    return documentId;
+  },
+});
+
+export const createFromUrl = mutation({
+  args: {
+    url: v.string(),
+    folderId: v.optional(v.id("folders")),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const url = args.url.startsWith("http") ? args.url : `https://${args.url}`;
+    const source = new URL(url).hostname;
+
+    const documentId = await ctx.db.insert("documents", {
+      type: "web",
+      title: url,
+      content: "Fetching content...",
+      source,
+      excerpt: "Fetching content...",
+      folderId: args.folderId,
+      userId,
+      scrapingStatus: "pending",
+    });
+
+    await ctx.scheduler.runAfter(0, internal.scraping.scrapeUrl, {
+      documentId,
+      url,
     });
 
     return documentId;
