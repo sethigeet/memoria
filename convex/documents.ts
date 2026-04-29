@@ -180,6 +180,7 @@ async function updateDocumentHelper(
   args: {
     title?: string;
     content?: string;
+    notebook?: string;
     folderId?: Id<"folders">;
     summary?: string | null;
     summaryType?: string | null;
@@ -191,6 +192,7 @@ async function updateDocumentHelper(
     updates.content = args.content;
     updates.excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
   }
+  if (args.notebook !== undefined) updates.notebook = args.notebook;
   if (args.folderId !== undefined) updates.folderId = args.folderId;
   if (args.summary !== undefined) updates.summary = args.summary ?? undefined;
   if (args.summaryType !== undefined) updates.summaryType = args.summaryType ?? undefined;
@@ -204,6 +206,7 @@ export const update = mutation({
     id: v.id("documents"),
     title: v.optional(v.string()),
     content: v.optional(v.string()),
+    notebook: v.optional(v.string()),
     folderId: v.optional(v.id("folders")),
     summary: v.optional(v.union(v.string(), v.null())),
     summaryType: v.optional(v.union(v.string(), v.null())),
@@ -421,6 +424,68 @@ export const internalAddTags = internalMutation({
     const doc = await ctx.db.get(args.documentId);
     if (!doc) throw new Error("Document not found");
     await addTagsHelper(ctx, args.documentId, args.tags, doc.userId);
+  },
+});
+
+export const removeTags = mutation({
+  args: {
+    documentId: v.id("documents"),
+    tags: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc || doc.userId !== userId) {
+      throw new Error("Document not found");
+    }
+
+    for (const tagName of args.tags) {
+      const tag = await ctx.db
+        .query("tags")
+        .withIndex("by_name_and_userId", (q) => q.eq("name", tagName).eq("userId", userId))
+        .unique();
+
+      if (tag) {
+        const docTag = await ctx.db
+          .query("documentTags")
+          .withIndex("by_documentId", (q) => q.eq("documentId", args.documentId))
+          .filter((q) => q.eq(q.field("tagId"), tag._id))
+          .unique();
+
+        if (docTag) {
+          await ctx.db.delete(docTag._id);
+        }
+      }
+    }
+  },
+});
+
+export const updateTags = mutation({
+  args: {
+    documentId: v.id("documents"),
+    tags: v.array(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc || doc.userId !== userId) {
+      throw new Error("Document not found");
+    }
+
+    const existingDocTags = await ctx.db
+      .query("documentTags")
+      .withIndex("by_documentId", (q) => q.eq("documentId", args.documentId))
+      .collect();
+
+    for (const docTag of existingDocTags) {
+      await ctx.db.delete(docTag._id);
+    }
+
+    await addTagsHelper(ctx, args.documentId, args.tags, userId);
   },
 });
 

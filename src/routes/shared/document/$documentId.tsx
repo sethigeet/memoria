@@ -47,11 +47,13 @@ function PublicDocumentView() {
 
       <main className="max-w-4xl mx-auto px-6 py-8">
         <DocumentMeta
+          documentId={documentId as Id<"documents">}
           type={document.type}
           title={document.title}
           tags={document.tags}
           source={document.source}
           creationTime={document._creationTime}
+          editable={false}
         />
 
         {document.summary && (

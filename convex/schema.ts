@@ -30,6 +30,7 @@ export default defineSchema({
     userId: v.string(),
     deletedAt: v.optional(v.number()),
     isPublic: v.optional(v.boolean()),
+    notebook: v.optional(v.string()),
     // AI-generated fields
     summary: v.optional(v.string()),
     summaryType: v.optional(v.string()),

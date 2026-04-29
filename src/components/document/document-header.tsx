@@ -4,14 +4,23 @@ import { type Id } from "#/lib/convex";
 import { Button } from "#/components/ui/button";
 import { ShareDialog } from "./share-dialog";
 
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
 type DocumentHeaderProps = {
   title: string;
   documentId: Id<"documents">;
   isPublic?: boolean;
   onBack: () => void;
+  saveStatus?: SaveStatus;
 };
 
-export function DocumentHeader({ title, documentId, isPublic, onBack }: DocumentHeaderProps) {
+export function DocumentHeader({
+  title,
+  documentId,
+  isPublic,
+  onBack,
+  saveStatus,
+}: DocumentHeaderProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   return (
@@ -26,10 +35,22 @@ export function DocumentHeader({ title, documentId, isPublic, onBack }: Document
         </button>
         <span className="text-border">/</span>
         <span className="truncate text-foreground/70">{title}</span>
+        {saveStatus === "saving" && (
+          <span className="text-[10px] text-muted-foreground ml-2">Saving...</span>
+        )}
+        {saveStatus === "saved" && <span className="text-[10px] text-green-500 ml-2">Saved</span>}
+        {saveStatus === "error" && (
+          <span className="text-[10px] text-red-500 ml-2">Error saving</span>
+        )}
       </div>
 
       <div className="flex gap-1.5 shrink-0">
-        <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setShareDialogOpen(true)}>
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setShareDialogOpen(true)}
+        >
           <Share className="w-3 h-3" />
           Share
         </Button>

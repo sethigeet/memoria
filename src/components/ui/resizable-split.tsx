@@ -22,8 +22,7 @@ type ResizableSplitProps = {
   className?: string;
 };
 
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(max, Math.max(min, value));
+const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
 
 export function ResizableSplit({
   left,
@@ -116,10 +115,7 @@ export function ResizableSplit({
   const leftWidth = unit === "%" ? `${leftSize}%` : `${leftSize}px`;
 
   return (
-    <div
-      ref={containerRef}
-      className={cn("flex min-h-0 min-w-0 flex-1", className)}
-    >
+    <div ref={containerRef} className={cn("flex min-h-0 min-w-0 flex-1", className)}>
       <div
         className="flex min-h-0 min-w-0 flex-col overflow-hidden shrink-0"
         style={{ width: leftWidth }}
@@ -159,9 +155,7 @@ export function ResizableSplit({
         />
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        {right}
-      </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{right}</div>
     </div>
   );
 }

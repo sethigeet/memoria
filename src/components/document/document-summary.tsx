@@ -9,11 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "#/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "#/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "#/components/ui/collapsible";
 import { ChevronDown, Loader2, Sparkles, Trash2, Wand2 } from "lucide-react";
 import { Markdown } from "#/components/document/markdown-content";
 import { cn } from "#/lib/utils";

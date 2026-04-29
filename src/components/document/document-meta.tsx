@@ -1,16 +1,20 @@
 import { Link as LinkIcon } from "lucide-react";
-import { Badge } from "#/components/ui/badge";
 import { SourceLink } from "#/components/document/source-link";
+import { EditableTitle } from "#/components/document/editable-title";
+import { EditableTags } from "#/components/document/editable-tags";
+import type { Id } from "#/lib/convex";
 
 type DocumentType = "web" | "pdf" | "note";
 
 type DocumentMetaProps = {
+  documentId: Id<"documents">;
   type: DocumentType;
   title: string;
   tags: string[];
   source?: string;
   creationTime: number;
   folder?: { name: string; color: string } | null;
+  editable?: boolean;
 };
 
 const typeConfig: Record<DocumentType, { label: string; className: string }> = {
@@ -37,12 +41,14 @@ const formatDate = (timestamp: number) => {
 };
 
 export function DocumentMeta({
+  documentId,
   type,
   title,
   tags,
   source,
   creationTime,
   folder,
+  editable = true,
 }: DocumentMetaProps) {
   const config = typeConfig[type];
 
@@ -68,20 +74,15 @@ export function DocumentMeta({
         </span>
       </div>
 
-      <h1 className="text-[22px] font-extrabold tracking-tight leading-tight mb-2.5">
-        {title}
-      </h1>
+      <EditableTitle
+        documentId={documentId}
+        title={title}
+        editable={editable}
+        className="text-[22px] font-extrabold tracking-tight leading-tight mb-2.5"
+      />
 
-      <div className="flex flex-wrap gap-1.5 mb-2">
-        {tags.map((tag) => (
-          <Badge
-            key={tag}
-            variant="secondary"
-            className="text-[11px] px-2 py-0 h-5 bg-secondary/50 text-muted-foreground border border-border"
-          >
-            #{tag}
-          </Badge>
-        ))}
+      <div className="mb-2">
+        <EditableTags documentId={documentId} tags={tags} editable={editable} />
       </div>
 
       {source && (

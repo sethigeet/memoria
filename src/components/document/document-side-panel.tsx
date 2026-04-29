@@ -1,14 +1,30 @@
 import { BookOpen, MessageSquare } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "#/components/ui/tabs";
 import { ChatPane } from "#/components/document/chat-pane";
-import type { Id } from "#/lib/convex";
+import { RichEditor } from "#/components/editor/rich-editor";
+import { useDebouncedSave } from "#/components/editor/use-debounced-save";
+import { useMutation } from "convex/react";
+import { api, type Id } from "#/lib/convex";
+import { useCallback } from "react";
 
 type DocumentSidePanelProps = {
   documentId: Id<"documents">;
   content: string;
+  notebook?: string;
 };
 
-export function DocumentSidePanel({ documentId, content }: DocumentSidePanelProps) {
+export function DocumentSidePanel({ documentId, content, notebook }: DocumentSidePanelProps) {
+  const updateDocument = useMutation(api.documents.update);
+
+  const handleSaveNotebook = useCallback(
+    async (notebookContent: string) => {
+      await updateDocument({ id: documentId, notebook: notebookContent });
+    },
+    [documentId, updateDocument],
+  );
+
+  const { save: saveNotebook, status } = useDebouncedSave(handleSaveNotebook, 2000);
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden min-w-0 p-3 pt-2">
       <Tabs defaultValue="chat" className="flex-1 flex flex-col overflow-hidden">
@@ -26,21 +42,37 @@ export function DocumentSidePanel({ documentId, content }: DocumentSidePanelProp
           >
             <BookOpen className="w-3.5 h-3.5" />
             Notebook
+            {status === "saving" && (
+              <span className="ml-1 text-[10px] text-muted-foreground">saving...</span>
+            )}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="chat" className="flex-1 overflow-hidden m-0 bg-secondary/50 rounded-b-lg rounded-tr-lg">
+        <TabsContent
+          value="chat"
+          className="flex-1 overflow-hidden m-0 bg-secondary/50 rounded-b-lg rounded-tr-lg"
+        >
           <ChatPane documentId={documentId} content={content} />
         </TabsContent>
 
-        <TabsContent value="notebook" className="flex-1 overflow-hidden m-0 p-4 bg-secondary/50 rounded-b-lg rounded-tl-lg">
-          <div className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/60 mb-3">
-            Personal notes
+        <TabsContent
+          value="notebook"
+          className="flex-1 overflow-hidden m-0 p-4 bg-secondary/50 rounded-b-lg rounded-tl-lg"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[11px] font-medium tracking-wider uppercase text-muted-foreground/60">
+              Personal notes
+            </div>
+            {status === "saved" && <span className="text-[10px] text-green-500">Saved</span>}
           </div>
-          <textarea
-            placeholder="Write your thoughts, highlights, and connections here..."
-            className="w-full h-full bg-transparent border-0 outline-none text-[13px] text-foreground/80 leading-relaxed resize-none placeholder:text-muted-foreground/40"
-          />
+          <div className="h-[calc(100%-2rem)] overflow-y-auto">
+            <RichEditor
+              initialContent={notebook ?? ""}
+              placeholder="Write your thoughts, highlights, and connections here..."
+              onChange={saveNotebook}
+              className="text-[13px]"
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </div>

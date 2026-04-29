@@ -72,7 +72,9 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
         <div className="pointer-events-none absolute inset-0 bg-linear-to-r from-transparent via-sky-400/4 to-transparent bg-size-[200%_100%] animate-shimmer" />
 
         <div className="relative z-10 flex items-center justify-between gap-2">
-          <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${config.className}`}>
+          <span
+            className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${config.className}`}
+          >
             {config.label}
           </span>
           <div className="flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/10 px-2 py-0.5 text-sky-300">
@@ -92,7 +94,9 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
 
         <div className="relative z-10 mt-auto flex items-center gap-1.5">
           <TypeIcon className="h-3 w-3 text-muted-foreground/50" />
-          <span className="text-[11px] text-muted-foreground/60">{note.source || "Fetching..."}</span>
+          <span className="text-[11px] text-muted-foreground/60">
+            {note.source || "Fetching..."}
+          </span>
         </div>
       </div>
     );
@@ -105,13 +109,17 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         className={`relative flex min-h-[140px] cursor-pointer flex-col gap-2.5 overflow-hidden rounded-[10px] border border-red-500/25 bg-card p-[14px] transition-all duration-150 bg-[radial-gradient(circle_at_top_left,oklch(0.55_0.2_25/0.12),transparent_55%)] ${
-          hovered ? "-translate-y-px border-red-500/40 shadow-[0_4px_24px_rgba(239,68,68,0.15)]" : ""
+          hovered
+            ? "-translate-y-px border-red-500/40 shadow-[0_4px_24px_rgba(239,68,68,0.15)]"
+            : ""
         }`}
       >
         <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-red-500/20 blur-3xl animate-glow-pulse" />
 
         <div className="relative z-10 flex items-center justify-between gap-2">
-          <span className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${config.className}`}>
+          <span
+            className={`rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${config.className}`}
+          >
             {config.label}
           </span>
           <div className="flex items-center gap-1.5 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-red-300">

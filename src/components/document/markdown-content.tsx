@@ -149,10 +149,7 @@ const components: Components = {
   ),
   table: ({ children, ...props }) => (
     <div className="my-6 overflow-x-auto rounded-md border border-border">
-      <table
-        {...props}
-        className="w-full border-collapse text-[13px] text-foreground/85"
-      >
+      <table {...props} className="w-full border-collapse text-[13px] text-foreground/85">
         {children}
       </table>
     </div>
@@ -181,11 +178,7 @@ const components: Components = {
     </tr>
   ),
   img: ({ alt, ...props }) => (
-    <img
-      {...props}
-      alt={alt}
-      className="my-5 rounded-md border border-border/70 max-w-full"
-    />
+    <img {...props} alt={alt} className="my-5 rounded-md border border-border/70 max-w-full" />
   ),
   input: ({ type, checked, ...props }) => {
     if (type === "checkbox") {
@@ -193,9 +186,7 @@ const components: Components = {
         <span
           className={cn(
             "mr-2 inline-flex h-3.5 w-3.5 -translate-y-px items-center justify-center rounded-[3px] border align-middle",
-            checked
-              ? "border-primary bg-primary/20 text-primary"
-              : "border-border bg-secondary/40",
+            checked ? "border-primary bg-primary/20 text-primary" : "border-border bg-secondary/40",
           )}
         >
           {checked && (

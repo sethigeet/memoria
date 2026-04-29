@@ -1,12 +1,4 @@
-import {
-  AlertTriangle,
-  Check,
-  FileText,
-  Globe,
-  Loader2,
-  RotateCcw,
-  Trash2,
-} from "lucide-react";
+import { AlertTriangle, Check, FileText, Globe, Loader2, RotateCcw, Trash2 } from "lucide-react";
 
 export function ScrapingPendingState() {
   return (
@@ -23,7 +15,8 @@ export function ScrapingPendingState() {
         Extracting Content
       </h3>
       <p className="mb-7 text-[13px] leading-relaxed text-muted-foreground">
-        Analyzing and extracting the main content from this webpage. This usually takes a few seconds.
+        Analyzing and extracting the main content from this webpage. This usually takes a few
+        seconds.
       </p>
       <div className="flex w-full max-w-xs flex-col gap-2">
         <div className="flex items-center gap-2.5 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[12px] text-emerald-300">

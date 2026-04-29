@@ -66,9 +66,7 @@ export function ShareDialog({
       <DialogContent className="sm:max-w-md overflow-hidden">
         <DialogHeader className="overflow-hidden">
           <DialogTitle>Share {resourceType}</DialogTitle>
-          <DialogDescription className="truncate max-w-full">
-            {title}
-          </DialogDescription>
+          <DialogDescription className="truncate max-w-full">{title}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 overflow-hidden">
@@ -80,13 +78,9 @@ export function ShareDialog({
                 <Lock className="w-5 h-5 text-muted-foreground shrink-0" />
               )}
               <div className="min-w-0">
-                <p className="text-sm font-medium">
-                  {isPublic ? "Public" : "Private"}
-                </p>
+                <p className="text-sm font-medium">{isPublic ? "Public" : "Private"}</p>
                 <p className="text-xs text-muted-foreground truncate">
-                  {isPublic
-                    ? "Anyone with the link can view"
-                    : "Only you can access"}
+                  {isPublic ? "Anyone with the link can view" : "Only you can access"}
                 </p>
               </div>
             </div>
@@ -105,12 +99,7 @@ export function ShareDialog({
               <div className="flex-1 overflow-x-auto px-3 py-2 rounded-md border border-border bg-background font-mono text-xs text-muted-foreground whitespace-nowrap">
                 {shareUrl}
               </div>
-              <Button
-                variant="outline"
-                size="icon"
-                className="shrink-0"
-                onClick={handleCopy}
-              >
+              <Button variant="outline" size="icon" className="shrink-0" onClick={handleCopy}>
                 {copied ? (
                   <Check className="w-4 h-4 text-emerald-500" />
                 ) : (
