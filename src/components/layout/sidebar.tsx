@@ -11,6 +11,7 @@ import { Home, Search, Plus, Trash2 } from "lucide-react";
 import { SidebarFoldersSection } from "./sidebar/folders-section";
 import { SidebarTagsSection } from "./sidebar/tags-section";
 import { SidebarUserSection } from "./sidebar/user-section";
+import { ShareDialog } from "#/components/document/share-dialog";
 import type { FolderWithChildren } from "./sidebar/types";
 
 interface SidebarProps {
@@ -60,6 +61,7 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
   const [newFolderName, setNewFolderName] = useState("");
   const [renamingFolder, setRenamingFolder] = useState<Id<"folders"> | null>(null);
   const [renameValue, setRenameValue] = useState("");
+  const [sharingFolder, setSharingFolder] = useState<FolderWithChildren | null>(null);
 
   const folderTree = useMemo(() => {
     if (!folders) return [];
@@ -206,6 +208,7 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
               onRenameValueChange={setRenameValue}
               onNewNote={onNewNote}
               onChangeFolderColor={handleChangeFolderColor}
+              onShareFolder={setSharingFolder}
               onDeleteFolder={handleDeleteFolder}
             />
 
@@ -235,6 +238,17 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
 
         <SidebarUserSection user={currentUser} onSignOut={() => signOut()} />
       </div>
+
+      {sharingFolder && (
+        <ShareDialog
+          open={!!sharingFolder}
+          onOpenChange={(open) => !open && setSharingFolder(null)}
+          resourceType="folder"
+          resourceId={sharingFolder._id}
+          title={sharingFolder.name}
+          isPublic={folders?.find((f) => f._id === sharingFolder._id)?.isPublic ?? false}
+        />
+      )}
     </div>
   );
 }

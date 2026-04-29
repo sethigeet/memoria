@@ -65,7 +65,22 @@ export const get = query({
     if (!doc) return null;
     if (doc.deletedAt && !args.includeDeleted) return null;
 
-    // Allow access if public folder or owner
+    // Allow access if document is public
+    if (doc.isPublic) {
+      const docTags = await ctx.db
+        .query("documentTags")
+        .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
+        .collect();
+      const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
+      const folder = doc.folderId ? await ctx.db.get(doc.folderId) : null;
+      return {
+        ...doc,
+        tags: tags.filter(Boolean).map((t) => t!.name),
+        folder,
+      };
+    }
+
+    // Allow access if public folder
     if (doc.folderId) {
       const folder = await ctx.db.get(doc.folderId);
       if (folder?.isPublic && !folder.deletedAt) {
@@ -406,5 +421,48 @@ export const internalAddTags = internalMutation({
     const doc = await ctx.db.get(args.documentId);
     if (!doc) throw new Error("Document not found");
     await addTagsHelper(ctx, args.documentId, args.tags, doc.userId);
+  },
+});
+
+export const togglePublic = mutation({
+  args: { id: v.id("documents"), isPublic: v.boolean() },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== userId) {
+      throw new Error("Document not found");
+    }
+
+    await ctx.db.patch(args.id, { isPublic: args.isPublic });
+    return args.id;
+  },
+});
+
+export const getPublic = query({
+  args: { id: v.id("documents") },
+  handler: async (ctx, args) => {
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.deletedAt) return null;
+
+    // Check if document is public directly or belongs to a public folder
+    let isAccessible = doc.isPublic;
+    if (!isAccessible && doc.folderId) {
+      const folder = await ctx.db.get(doc.folderId);
+      isAccessible = folder?.isPublic && !folder.deletedAt;
+    }
+    if (!isAccessible) return null;
+
+    const docTags = await ctx.db
+      .query("documentTags")
+      .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
+      .collect();
+    const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
+
+    return {
+      ...doc,
+      tags: tags.filter(Boolean).map((t) => t!.name),
+    };
   },
 });

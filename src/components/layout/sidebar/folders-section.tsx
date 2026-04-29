@@ -21,6 +21,7 @@ import {
   Palette,
   Pencil,
   Plus,
+  Share,
   Trash2,
 } from "lucide-react";
 import { FolderCreateInput } from "./folder-create-input";
@@ -49,6 +50,7 @@ interface SidebarFoldersSectionProps {
   onRenameValueChange: (value: string) => void;
   onNewNote: (folderId?: Id<"folders">) => void;
   onChangeFolderColor: (folderId: Id<"folders">, color: string) => void;
+  onShareFolder: (folder: FolderWithChildren) => void;
   onDeleteFolder: (folderId: Id<"folders">) => void;
 }
 
@@ -74,6 +76,7 @@ interface FolderTreeItemProps {
   onRenameValueChange: (value: string) => void;
   onNewNote: (folderId?: Id<"folders">) => void;
   onChangeFolderColor: (folderId: Id<"folders">, color: string) => void;
+  onShareFolder: (folder: FolderWithChildren) => void;
   onDeleteFolder: (folderId: Id<"folders">) => void;
 }
 
@@ -99,6 +102,7 @@ function FolderTreeItem({
   onRenameValueChange,
   onNewNote,
   onChangeFolderColor,
+  onShareFolder,
   onDeleteFolder,
 }: FolderTreeItemProps) {
   const hasChildren = folder.children.length > 0;
@@ -221,6 +225,10 @@ function FolderTreeItem({
               </div>
             </ContextMenuSubContent>
           </ContextMenuSub>
+          <ContextMenuItem onClick={() => onShareFolder(folder)}>
+            <Share className="w-4 h-4" />
+            Share
+          </ContextMenuItem>
           <ContextMenuSeparator />
           <ContextMenuItem variant="destructive" onClick={() => onDeleteFolder(folder._id)}>
             <Trash2 className="w-4 h-4" />
@@ -255,6 +263,7 @@ function FolderTreeItem({
               onRenameValueChange={onRenameValueChange}
               onNewNote={onNewNote}
               onChangeFolderColor={onChangeFolderColor}
+              onShareFolder={onShareFolder}
               onDeleteFolder={onDeleteFolder}
             />
           ))}
@@ -298,6 +307,7 @@ export function SidebarFoldersSection({
   onRenameValueChange,
   onNewNote,
   onChangeFolderColor,
+  onShareFolder,
   onDeleteFolder,
 }: SidebarFoldersSectionProps) {
   return (
@@ -349,6 +359,7 @@ export function SidebarFoldersSection({
               onRenameValueChange={onRenameValueChange}
               onNewNote={onNewNote}
               onChangeFolderColor={onChangeFolderColor}
+              onShareFolder={onShareFolder}
               onDeleteFolder={onDeleteFolder}
             />
           ))}

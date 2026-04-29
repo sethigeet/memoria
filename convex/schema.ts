@@ -29,6 +29,7 @@ export default defineSchema({
     folderId: v.optional(v.id("folders")),
     userId: v.string(),
     deletedAt: v.optional(v.number()),
+    isPublic: v.optional(v.boolean()),
     // AI-generated fields
     summary: v.optional(v.string()),
     summaryType: v.optional(v.string()),
@@ -47,6 +48,7 @@ export default defineSchema({
     .index("by_folderId", ["folderId"])
     .index("by_userId_and_type", ["userId", "type"])
     .index("by_deletedAt", ["deletedAt"])
+    .index("by_isPublic", ["isPublic"])
     .searchIndex("search_content", {
       searchField: "content",
       filterFields: ["userId"],

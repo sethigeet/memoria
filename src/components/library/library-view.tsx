@@ -9,7 +9,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "#/components/ui/dropdown-menu";
-import { Filter, ChevronDown, BookOpen } from "lucide-react";
+import { ShareDialog } from "#/components/document/share-dialog";
+import { Filter, ChevronDown, BookOpen, Share } from "lucide-react";
 
 interface LibraryViewProps {
   activeFolder?: Id<"folders">;
@@ -35,6 +36,7 @@ export function LibraryView({
   searchQuery,
 }: LibraryViewProps) {
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const queryArgs = {
     ...(activeFolder && { folderId: activeFolder }),
@@ -118,6 +120,17 @@ export function LibraryView({
         </span>
 
         <div className="ml-auto flex gap-2 items-center">
+          {folder && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => setShareDialogOpen(true)}
+            >
+              <Share className="w-3 h-3" />
+              Share
+            </Button>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2 text-muted-foreground">
@@ -173,6 +186,17 @@ export function LibraryView({
           ))
         )}
       </div>
+
+      {folder && (
+        <ShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          resourceType="folder"
+          resourceId={folder._id}
+          title={folder.name}
+          isPublic={folder.isPublic}
+        />
+      )}
     </div>
   );
 }

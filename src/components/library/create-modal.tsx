@@ -49,6 +49,7 @@ export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps
   const createFromUrl = useMutation(api.documents.createFromUrl);
   const generateTitleAndTags = useAction(api.ai.generateTitleAndTags);
 
+  const foldersKey = folders.map((f) => `${f._id}:${f.parentId}`).join(",");
   const flatFolders = useMemo(() => {
     const result: FolderItem[] = [];
     const childrenMap = new Map<string | undefined, typeof folders>();
@@ -69,7 +70,8 @@ export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps
 
     traverse(undefined, 0);
     return result;
-  }, [folders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [foldersKey]);
 
   const handleCreate = async () => {
     setProcessing(true);

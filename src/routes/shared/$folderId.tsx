@@ -1,14 +1,16 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
+import { createFileRoute, useParams, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api, type Id } from "#/lib/convex";
 import { NoteCard } from "#/components/library/note-card";
 import { Logo } from "#/components/ui/logo";
+import { LoadingSplash } from "#/components/ui/loading-splash";
 
 export const Route = createFileRoute("/shared/$folderId")({
   component: PublicFolderView,
 });
 
 function PublicFolderView() {
+  const navigate = useNavigate();
   const { folderId } = useParams({ from: "/shared/$folderId" });
   const folder = useQuery(api.folders.getPublic, {
     id: folderId as Id<"folders">,
@@ -18,11 +20,7 @@ function PublicFolderView() {
   });
 
   if (folder === undefined || documents === undefined) {
-    return (
-      <div className="min-h-screen bg-[#0e0e12] flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Loading...</div>
-      </div>
-    );
+    return <LoadingSplash />;
   }
 
   if (folder === null) {
@@ -70,8 +68,7 @@ function PublicFolderView() {
                 key={doc._id}
                 note={doc}
                 onClick={() => {
-                  // In public view, could open a read-only document view
-                  // For now, just a placeholder
+                  navigate({ to: "/shared/document/$documentId", params: { documentId: doc._id } });
                 }}
               />
             ))}

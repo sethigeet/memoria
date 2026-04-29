@@ -15,6 +15,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as SharedFolderIdRouteImport } from './routes/shared/$folderId'
 import { Route as AuthenticatedTrashRouteImport } from './routes/_authenticated/trash'
 import { Route as AuthenticatedSearchRouteImport } from './routes/_authenticated/search'
+import { Route as SharedDocumentDocumentIdRouteImport } from './routes/shared/document/$documentId'
 import { Route as AuthenticatedTagTagIdRouteImport } from './routes/_authenticated/tag/$tagId'
 import { Route as AuthenticatedFolderFolderIdRouteImport } from './routes/_authenticated/folder/$folderId'
 import { Route as AuthenticatedDocumentDocumentIdRouteImport } from './routes/_authenticated/document/$documentId'
@@ -48,6 +49,12 @@ const AuthenticatedSearchRoute = AuthenticatedSearchRouteImport.update({
   path: '/search',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const SharedDocumentDocumentIdRoute =
+  SharedDocumentDocumentIdRouteImport.update({
+    id: '/shared/document/$documentId',
+    path: '/shared/document/$documentId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedTagTagIdRoute = AuthenticatedTagTagIdRouteImport.update({
   id: '/tag/$tagId',
   path: '/tag/$tagId',
@@ -75,6 +82,7 @@ export interface FileRoutesByFullPath {
   '/document/$documentId': typeof AuthenticatedDocumentDocumentIdRoute
   '/folder/$folderId': typeof AuthenticatedFolderFolderIdRoute
   '/tag/$tagId': typeof AuthenticatedTagTagIdRoute
+  '/shared/document/$documentId': typeof SharedDocumentDocumentIdRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -85,6 +93,7 @@ export interface FileRoutesByTo {
   '/document/$documentId': typeof AuthenticatedDocumentDocumentIdRoute
   '/folder/$folderId': typeof AuthenticatedFolderFolderIdRoute
   '/tag/$tagId': typeof AuthenticatedTagTagIdRoute
+  '/shared/document/$documentId': typeof SharedDocumentDocumentIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -97,6 +106,7 @@ export interface FileRoutesById {
   '/_authenticated/document/$documentId': typeof AuthenticatedDocumentDocumentIdRoute
   '/_authenticated/folder/$folderId': typeof AuthenticatedFolderFolderIdRoute
   '/_authenticated/tag/$tagId': typeof AuthenticatedTagTagIdRoute
+  '/shared/document/$documentId': typeof SharedDocumentDocumentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/document/$documentId'
     | '/folder/$folderId'
     | '/tag/$tagId'
+    | '/shared/document/$documentId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/document/$documentId'
     | '/folder/$folderId'
     | '/tag/$tagId'
+    | '/shared/document/$documentId'
   id:
     | '__root__'
     | '/_authenticated'
@@ -130,12 +142,14 @@ export interface FileRouteTypes {
     | '/_authenticated/document/$documentId'
     | '/_authenticated/folder/$folderId'
     | '/_authenticated/tag/$tagId'
+    | '/shared/document/$documentId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   LoginRoute: typeof LoginRoute
   SharedFolderIdRoute: typeof SharedFolderIdRoute
+  SharedDocumentDocumentIdRoute: typeof SharedDocumentDocumentIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -181,6 +195,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/search'
       preLoaderRoute: typeof AuthenticatedSearchRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/shared/document/$documentId': {
+      id: '/shared/document/$documentId'
+      path: '/shared/document/$documentId'
+      fullPath: '/shared/document/$documentId'
+      preLoaderRoute: typeof SharedDocumentDocumentIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tag/$tagId': {
       id: '/_authenticated/tag/$tagId'
@@ -232,6 +253,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   LoginRoute: LoginRoute,
   SharedFolderIdRoute: SharedFolderIdRoute,
+  SharedDocumentDocumentIdRoute: SharedDocumentDocumentIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

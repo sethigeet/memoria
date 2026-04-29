@@ -21,7 +21,7 @@ export function ChatPane({ documentId, content }: ChatPaneProps) {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+  }, [messages.length, loading]);
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;

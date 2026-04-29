@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
-import { Loader2 } from "lucide-react";
 import { api, type Id } from "#/lib/convex";
+import { LoadingSplash } from "#/components/ui/loading-splash";
 import { DocumentHeader } from "#/components/document/document-header";
 import { DocumentMeta } from "#/components/document/document-meta";
 import { DocumentSidePanel } from "#/components/document/document-side-panel";
@@ -28,11 +28,7 @@ function DocumentRoute() {
   const onBack = () => navigate({ to: "/" });
 
   if (!document) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-      </div>
-    );
+    return <LoadingSplash fullScreen={false} />;
   }
 
   const isScraping =
@@ -42,7 +38,7 @@ function DocumentRoute() {
 
   return (
     <div className="flex-1 h-screen flex flex-col overflow-hidden">
-      <DocumentHeader title={document.title} onBack={onBack} />
+      <DocumentHeader title={document.title} documentId={documentId} isPublic={document.isPublic} onBack={onBack} />
 
       <ResizableSplit
         storageKey="document-split:left-percent"
