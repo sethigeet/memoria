@@ -12,7 +12,7 @@ const components: Components = {
   h1: ({ children, ...props }) => (
     <h1
       {...props}
-      className="font-serif text-[32px] leading-[1.1] tracking-tight text-foreground mt-2 mb-5 first:mt-0"
+      className="font-sans text-[32px] leading-[1.1] tracking-tight text-foreground mt-2 mb-5 first:mt-0"
     >
       {children}
     </h1>
@@ -20,7 +20,7 @@ const components: Components = {
   h2: ({ children, ...props }) => (
     <h2
       {...props}
-      className="font-serif text-[26px] leading-[1.15] tracking-tight text-foreground mt-9 mb-3.5 first:mt-0"
+      className="font-sans text-[26px] leading-[1.15] tracking-tight text-foreground mt-9 mb-3.5 first:mt-0"
     >
       {children}
     </h2>
