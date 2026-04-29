@@ -2,7 +2,7 @@
 
 import { v } from "convex/values";
 import { internalAction } from "./_generated/server";
-import { internal, api } from "./_generated/api";
+import { internal } from "./_generated/api";
 import * as cheerio from "cheerio";
 import { extractText } from "unpdf";
 import TurndownService from "turndown";
@@ -101,9 +101,8 @@ export const scrapeUrl = internalAction({
       // Generate title and tags using AI (non-critical)
       if (content.length > 50) {
         try {
-          await ctx.runAction(api.ai.generateTitleAndTags, {
+          await ctx.runAction(internal.ai.generateTitleAndTagsInternal, {
             documentId: args.documentId,
-            content,
           });
         } catch {
           // Title/tag generation is non-critical, ignore errors

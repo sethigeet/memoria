@@ -18,6 +18,12 @@ export const list = query({
 export const getDocumentCount = query({
   args: { tagId: v.id("tags") },
   handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) return 0;
+
+    const tag = await ctx.db.get(args.tagId);
+    if (!tag || tag.userId !== userId) return 0;
+
     const relations = await ctx.db
       .query("documentTags")
       .withIndex("by_tagId", (q) => q.eq("tagId", args.tagId))

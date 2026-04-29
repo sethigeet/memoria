@@ -1,8 +1,14 @@
 import { v } from "convex/values";
-import { query, mutation, internalMutation, MutationCtx } from "./_generated/server";
+import {
+  query,
+  mutation,
+  internalMutation,
+  internalQuery,
+  type MutationCtx,
+} from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
-import { Id } from "./_generated/dataModel";
+import type { Doc, Id } from "./_generated/dataModel";
 
 export const list = query({
   args: {
@@ -125,6 +131,7 @@ export const create = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await ensureOwnedFolder(ctx, args.folderId, userId);
 
     const excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
 
@@ -150,6 +157,7 @@ export const createFromUrl = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await ensureOwnedFolder(ctx, args.folderId, userId);
 
     const url = args.url.startsWith("http") ? args.url : `https://${args.url}`;
     const source = url;
@@ -201,6 +209,19 @@ async function updateDocumentHelper(
   return id;
 }
 
+async function ensureOwnedFolder(
+  ctx: MutationCtx,
+  folderId: Id<"folders"> | undefined,
+  userId: string,
+) {
+  if (!folderId) return;
+
+  const folder = await ctx.db.get(folderId);
+  if (!folder || folder.userId !== userId || folder.deletedAt) {
+    throw new Error("Folder not found");
+  }
+}
+
 export const update = mutation({
   args: {
     id: v.id("documents"),
@@ -214,6 +235,7 @@ export const update = mutation({
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
+    await ensureOwnedFolder(ctx, args.folderId, userId);
 
     const doc = await ctx.db.get(args.id);
     if (!doc || doc.userId !== userId) {
@@ -235,6 +257,26 @@ export const internalUpdate = internalMutation({
     const doc = await ctx.db.get(args.id);
     if (!doc) throw new Error("Document not found");
     return await updateDocumentHelper(ctx, args.id, args);
+  },
+});
+
+export const getDocumentAuthState = internalQuery({
+  args: {
+    documentId: v.id("documents"),
+  },
+  handler: async (
+    ctx,
+    args,
+  ): Promise<Pick<Doc<"documents">, "_id" | "userId" | "deletedAt" | "content"> | null> => {
+    const doc = await ctx.db.get(args.documentId);
+    if (!doc) return null;
+
+    return {
+      _id: doc._id,
+      userId: doc.userId,
+      deletedAt: doc.deletedAt,
+      content: doc.content,
+    };
   },
 });
 
