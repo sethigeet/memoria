@@ -13,8 +13,7 @@ const nim = createOpenAICompatible({
   apiKey: process.env.NIM_API_KEY,
 });
 
-// const model = nim.chatModel("deepseek-ai/deepseek-v4-flash");
-const model = nim.chatModel("moonshotai/kimi-k2-instruct-0905");
+const model = nim.chatModel(process.env.MODEL_ID ?? "deepseek-ai/deepseek-v4-flash");
 
 export const generateTitleAndTags = action({
   args: {
