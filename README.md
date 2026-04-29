@@ -1,218 +1,82 @@
-Welcome to your new TanStack Start app!
+# Memoria
 
-# Getting Started
+Memoria is a personal knowledge library for collecting, organizing, and reading documents in one place. It supports saved web pages, PDFs, and native notes, then layers AI-assisted summaries, tagging, and document chat on top of that content.
 
-To run this application:
+## What it does
+
+- Save content from URLs, PDFs, and native notes
+- Organize documents with folders and tags
+- Search across your saved library
+- Edit notes directly in a rich text editor
+- Generate AI summaries and suggested metadata
+- Chat with a document using its saved content as context
+- Share public documents and folders
+- Restore deleted items from trash
+
+## Tech stack
+
+- Frontend: React 19, TanStack Start, TanStack Router, Tailwind CSS
+- Backend: Convex
+- Authentication: `@convex-dev/auth` with password-based auth
+- Editor: Tiptap
+- AI: Vercel AI SDK with an OpenAI-compatible NVIDIA NIM endpoint
+- Content extraction: Cheerio, Turndown, `unpdf`
+
+## Requirements
+
+- [Bun](https://bun.sh/)
+- A Convex project
+- An NVIDIA NIM API key if you want AI features enabled
+
+## Getting started
+
+1. Install dependencies:
 
 ```bash
 bun install
-bun --bun run dev
 ```
 
-# Building For Production
-
-To build this application for production:
+1. Initialize or connect Convex if you have not already:
 
 ```bash
-bun --bun run build
+bunx convex init
 ```
 
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+1. Update the `.env.local` file with necessary environment variables.
+2. Start Convex in one terminal:
 
 ```bash
-bun --bun run test
+bunx convex dev
 ```
 
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
-
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `bun install @tailwindcss/vite tailwindcss -D`
-
-## Setting up Convex
-
-- Set the `VITE_CONVEX_URL` and `CONVEX_DEPLOYMENT` environment variables in your `.env.local`. (Or run `bunx --bun convex init` to set them automatically.)
-- Run `bunx --bun convex dev` to start the Convex server.
-
-## Shadcn
-
-Add components using the latest version of [Shadcn](https://ui.shadcn.com/).
+1. Start the app in another terminal:
 
 ```bash
-pnpm dlx shadcn@latest add button
+bun run dev
 ```
 
-## T3Env
+## How Memoria works
 
-- You can use T3Env to add type safety to your environment variables.
-- Add Environment variables to the `src/env.mjs` file.
-- Use the environment variables in your code.
+When you save a URL, Memoria fetches the page, extracts readable content, converts it to Markdown, and stores it in Convex. PDF links are detected automatically and text is extracted before saving.
 
-### Usage
+Saved content can then be:
 
-```ts
-import { env } from "#/env";
+- grouped into folders
+- tagged for retrieval
+- searched by title and content
+- summarized with AI
+- opened in a document-specific chat
+- shared publicly when needed
 
-console.log(env.VITE_APP_TITLE);
-```
+Native notes follow the same document model, which means they can live alongside imported content in the same library.
 
-## Routing
+## AI features
 
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
+If `NIM_API_KEY` is configured, Memoria can:
 
-### Adding A Route
+- generate document titles and tags after import
+- create concise, detailed, or action-oriented summaries
+- answer questions about a document using its stored content
 
-To add a new route to your application just add a new file in the `./src/routes` directory.
+If the key is not present, the core library features still work, but AI-dependent features will not.
 
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router";
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "My App" },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-});
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from "@tanstack/react-start";
-
-const getServerTime = createServerFn({
-  method: "GET",
-}).handler(async () => {
-  return new Date().toISOString();
-});
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState("");
-
-  useEffect(() => {
-    getServerTime().then(setTime);
-  }, []);
-
-  return <div>Server time: {time}</div>;
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from "@tanstack/react-router";
-import { json } from "@tanstack/react-start";
-
-export const Route = createFileRoute("/api/hello")({
-  server: {
-    handlers: {
-      GET: () => json({ message: "Hello, World!" }),
-    },
-  },
-});
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from "@tanstack/react-router";
-
-export const Route = createFileRoute("/people")({
-  loader: async () => {
-    const response = await fetch("https://swapi.dev/api/people");
-    return response.json();
-  },
-  component: PeopleComponent,
-});
-
-function PeopleComponent() {
-  const data = Route.useLoaderData();
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  );
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
