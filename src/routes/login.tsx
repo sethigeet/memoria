@@ -28,6 +28,8 @@ function RedirectToHome() {
   return null;
 }
 
+const signupsDisabled = import.meta.env.VITE_SIGNUPS_DISABLED === "true";
+
 function AuthScreen() {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
 
@@ -36,6 +38,8 @@ function AuthScreen() {
       <div className="w-full max-w-md p-8 rounded-2xl bg-card border border-border animate-in fade-in slide-in-from-bottom-3 duration-200">
         {mode === "signIn" ? (
           <SignInForm onToggle={() => setMode("signUp")} />
+        ) : signupsDisabled ? (
+          <SignupsDisabledMessage onToggle={() => setMode("signIn")} />
         ) : (
           <SignUpForm onToggle={() => setMode("signIn")} />
         )}
@@ -124,6 +128,34 @@ function SignInForm({ onToggle }: { onToggle: () => void }) {
   );
 }
 
+function SignupsDisabledMessage({ onToggle }: { onToggle: () => void }) {
+  return (
+    <div className="w-full max-w-sm mx-auto">
+      <div className="text-center mb-8">
+        <div className="w-12 h-12 rounded-xl bg-[#0e0e12] border border-border flex items-center justify-center mx-auto mb-4">
+          <Logo />
+        </div>
+        <h1 className="text-2xl font-bold tracking-tight">Sign ups are closed</h1>
+        <p className="text-muted-foreground mt-2">
+          New account registrations are currently disabled. Please contact the administrator if you
+          need access.
+        </p>
+      </div>
+
+      <p className="text-center text-sm text-muted-foreground mt-6">
+        Already have an account?{" "}
+        <button
+          type="button"
+          onClick={onToggle}
+          className="text-primary hover:underline font-medium"
+        >
+          Sign in
+        </button>
+      </p>
+    </div>
+  );
+}
+
 function SignUpForm({ onToggle }: { onToggle: () => void }) {
   const { signIn } = useAuthActions();
   const [name, setName] = useState("");
@@ -132,7 +164,7 @@ function SignUpForm({ onToggle }: { onToggle: () => void }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
