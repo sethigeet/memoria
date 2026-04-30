@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
+import { removeDocumentTagsAndPrune } from "./tagCleanup";
 
 export const list = query({
   args: {},
@@ -255,13 +256,7 @@ export const permanentlyDelete = mutation({
         .collect();
 
       for (const doc of documents) {
-        const docTags = await ctx.db
-          .query("documentTags")
-          .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
-          .collect();
-        for (const dt of docTags) {
-          await ctx.db.delete(dt._id);
-        }
+        await removeDocumentTagsAndPrune(ctx, doc._id);
 
         const messages = await ctx.db
           .query("chatMessages")

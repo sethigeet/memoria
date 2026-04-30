@@ -17,6 +17,7 @@ import type * as folders from "../folders.js";
 import type * as http from "../http.js";
 import type * as scraping from "../scraping.js";
 import type * as scrapingHelpers from "../scrapingHelpers.js";
+import type * as tagCleanup from "../tagCleanup.js";
 import type * as tags from "../tags.js";
 import type * as trash from "../trash.js";
 
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   scraping: typeof scraping;
   scrapingHelpers: typeof scrapingHelpers;
+  tagCleanup: typeof tagCleanup;
   tags: typeof tags;
   trash: typeof trash;
 }>;

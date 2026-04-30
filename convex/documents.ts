@@ -9,6 +9,7 @@ import {
 import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
+import { pruneTagIfUnused, removeDocumentTagsAndPrune } from "./tagCleanup";
 
 export const list = query({
   args: {
@@ -322,14 +323,7 @@ export const permanentlyDelete = mutation({
       throw new Error("Document not found");
     }
 
-    // Delete associated tags
-    const docTags = await ctx.db
-      .query("documentTags")
-      .withIndex("by_documentId", (q) => q.eq("documentId", args.id))
-      .collect();
-    for (const dt of docTags) {
-      await ctx.db.delete(dt._id);
-    }
+    await removeDocumentTagsAndPrune(ctx, args.id);
 
     // Delete chat messages
     const messages = await ctx.db
@@ -498,6 +492,7 @@ export const removeTags = mutation({
 
         if (docTag) {
           await ctx.db.delete(docTag._id);
+          await pruneTagIfUnused(ctx, tag._id);
         }
       }
     }
@@ -523,11 +518,33 @@ export const updateTags = mutation({
       .withIndex("by_documentId", (q) => q.eq("documentId", args.documentId))
       .collect();
 
-    for (const docTag of existingDocTags) {
+    const existingTags = await Promise.all(
+      existingDocTags.map(async (docTag) => ({
+        docTag,
+        tag: await ctx.db.get(docTag.tagId),
+      })),
+    );
+    const desiredTags = new Set(args.tags);
+
+    for (const { docTag, tag } of existingTags) {
+      if (!tag || desiredTags.has(tag.name)) {
+        continue;
+      }
+
       await ctx.db.delete(docTag._id);
+      await pruneTagIfUnused(ctx, tag._id);
     }
 
-    await addTagsHelper(ctx, args.documentId, args.tags, userId);
+    const existingTagNames = new Set(
+      existingTags.flatMap(({ tag }) => (tag ? [tag.name] : [])),
+    );
+    const tagsToAdd = args.tags.filter((tagName) => !existingTagNames.has(tagName));
+
+    if (tagsToAdd.length === 0) {
+      return;
+    }
+
+    await addTagsHelper(ctx, args.documentId, tagsToAdd, userId);
   },
 });
 

@@ -1,4 +1,5 @@
 import { internalMutation } from "./_generated/server";
+import { removeDocumentTagsAndPrune } from "./tagCleanup";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -12,14 +13,7 @@ export const cleanupExpired = internalMutation({
     const expiredDocs = allDocs.filter((d) => d.deletedAt && d.deletedAt < expirationThreshold);
 
     for (const doc of expiredDocs) {
-      // Delete associated tags
-      const docTags = await ctx.db
-        .query("documentTags")
-        .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
-        .collect();
-      for (const dt of docTags) {
-        await ctx.db.delete(dt._id);
-      }
+      await removeDocumentTagsAndPrune(ctx, doc._id);
 
       // Delete chat messages
       const messages = await ctx.db
