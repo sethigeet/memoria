@@ -3,6 +3,25 @@ import { useMutation } from "convex/react";
 import { api, type Id } from "#/lib/convex";
 import { Link, FileText, Edit3, Trash2, AlertTriangle, RotateCcw } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
+import { NoteCardContextMenu } from "./note-actions-menu";
+
+const typeConfig = {
+  web: {
+    label: "Web",
+    icon: Link,
+    className: "bg-blue-500/15 text-blue-500 border border-blue-500/20",
+  },
+  pdf: {
+    label: "PDF",
+    icon: FileText,
+    className: "bg-red-500/15 text-red-500 border border-red-500/20",
+  },
+  note: {
+    label: "Note",
+    icon: Edit3,
+    className: "bg-violet-400/15 text-violet-400 border border-violet-400/20",
+  },
+};
 
 interface NoteCardProps {
   note: {
@@ -13,6 +32,7 @@ interface NoteCardProps {
     source?: string;
     excerpt?: string;
     tags: string[];
+    folderId?: Id<"folders">;
     scrapingStatus?: "pending" | "processing" | "completed" | "failed";
     scrapingError?: string;
   };
@@ -26,24 +46,6 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     deleteDocument({ id: note._id });
-  };
-
-  const typeConfig = {
-    web: {
-      label: "Web",
-      icon: Link,
-      className: "bg-blue-500/15 text-blue-500 border border-blue-500/20",
-    },
-    pdf: {
-      label: "PDF",
-      icon: FileText,
-      className: "bg-red-500/15 text-red-500 border border-red-500/20",
-    },
-    note: {
-      label: "Note",
-      icon: Edit3,
-      className: "bg-violet-400/15 text-violet-400 border border-violet-400/20",
-    },
   };
 
   const config = typeConfig[note.type];
@@ -60,12 +62,98 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
   const isProcessing = note.scrapingStatus === "pending" || note.scrapingStatus === "processing";
   const isError = note.scrapingStatus === "failed";
 
-  if (isProcessing) {
-    return (
+  if (isProcessing) return <ProcessingNoteCard note={note} onClick={onClick} />;
+
+  if (isError) return <ErrorNoteCard note={note} onClick={onClick} />;
+
+  return (
+    <NoteCardContextMenu documentId={note._id} folderId={note.folderId}>
       <div
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        className={`rounded-[10px] p-[14px] cursor-pointer transition-all duration-150 flex flex-col gap-2.5 min-h-[140px] ${
+          hovered
+            ? "bg-[#1c1c22] border-[#2e2e38] -translate-y-px shadow-lg"
+            : "bg-card border-border"
+        } border`}
+        style={{
+          boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : undefined,
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={`text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded uppercase ${config.className}`}
+          >
+            {config.label}
+          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground">
+              {formatDate(note._creationTime)}
+            </span>
+            {hovered && (
+              <button
+                onClick={handleDelete}
+                className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                title="Move to trash"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-[13.5px] font-semibold text-foreground leading-tight tracking-tight">
+          {note.title}
+        </h3>
+
+        {/* Excerpt */}
+        {note.excerpt && (
+          <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3">
+            {note.excerpt}
+          </p>
+        )}
+
+        {/* Footer */}
+        <div className="mt-auto flex flex-col gap-2">
+          {note.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {note.tags.slice(0, 3).map((tag) => (
+                <Badge
+                  key={tag}
+                  variant="secondary"
+                  className="text-[11px] px-2 py-0 h-5 bg-secondary/50 text-muted-foreground border border-border"
+                >
+                  #{tag}
+                </Badge>
+              ))}
+              {note.tags.length > 3 && (
+                <span className="text-[11px] text-muted-foreground px-1">
+                  +{note.tags.length - 3}
+                </span>
+              )}
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <TypeIcon className="w-3 h-3" />
+            <span className="text-[11px]">{note.source || "Custom note"}</span>
+          </div>
+        </div>
+      </div>
+    </NoteCardContextMenu>
+  );
+}
+
+function ProcessingNoteCard({ note, onClick }: NoteCardProps) {
+  const config = typeConfig[note.type];
+  const TypeIcon = config.icon;
+
+  return (
+    <NoteCardContextMenu documentId={note._id} folderId={note.folderId}>
+      <div
+        onClick={onClick}
         className="group relative flex min-h-[140px] cursor-pointer flex-col gap-2.5 overflow-hidden rounded-[10px] border border-sky-500/20 bg-card p-[14px] transition-all duration-150 bg-[radial-gradient(circle_at_top_right,oklch(0.62_0.18_232/0.08),transparent_60%)]"
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[2px] bg-linear-to-r from-transparent via-sky-400/80 to-transparent shadow-[0_0_12px_rgba(56,189,248,0.6)] animate-scan" />
@@ -99,11 +187,18 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
           </span>
         </div>
       </div>
-    );
-  }
+    </NoteCardContextMenu>
+  );
+}
 
-  if (isError) {
-    return (
+function ErrorNoteCard({ note, onClick }: NoteCardProps) {
+  const [hovered, setHovered] = useState(false);
+
+  const config = typeConfig[note.type];
+  const TypeIcon = config.icon;
+
+  return (
+    <NoteCardContextMenu documentId={note._id} folderId={note.folderId}>
       <div
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
@@ -154,83 +249,6 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
           </button>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div
-      onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`rounded-[10px] p-[14px] cursor-pointer transition-all duration-150 flex flex-col gap-2.5 min-h-[140px] ${
-        hovered
-          ? "bg-[#1c1c22] border-[#2e2e38] -translate-y-px shadow-lg"
-          : "bg-card border-border"
-      } border`}
-      style={{
-        boxShadow: hovered ? "0 4px 16px rgba(0,0,0,0.3)" : undefined,
-      }}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between gap-2">
-        <span
-          className={`text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded uppercase ${config.className}`}
-        >
-          {config.label}
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">
-            {formatDate(note._creationTime)}
-          </span>
-          {hovered && (
-            <button
-              onClick={handleDelete}
-              className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
-              title="Move to trash"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Title */}
-      <h3 className="text-[13.5px] font-semibold text-foreground leading-tight tracking-tight">
-        {note.title}
-      </h3>
-
-      {/* Excerpt */}
-      {note.excerpt && (
-        <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-3">
-          {note.excerpt}
-        </p>
-      )}
-
-      {/* Footer */}
-      <div className="mt-auto flex flex-col gap-2">
-        {note.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {note.tags.slice(0, 3).map((tag) => (
-              <Badge
-                key={tag}
-                variant="secondary"
-                className="text-[11px] px-2 py-0 h-5 bg-secondary/50 text-muted-foreground border border-border"
-              >
-                #{tag}
-              </Badge>
-            ))}
-            {note.tags.length > 3 && (
-              <span className="text-[11px] text-muted-foreground px-1">
-                +{note.tags.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <TypeIcon className="w-3 h-3" />
-          <span className="text-[11px]">{note.source || "Custom note"}</span>
-        </div>
-      </div>
-    </div>
+    </NoteCardContextMenu>
   );
 }

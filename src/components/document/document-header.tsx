@@ -1,24 +1,29 @@
 import { useState } from "react";
-import { ArrowLeft, MoreHorizontal, Share } from "lucide-react";
+import { ArrowLeft, Share } from "lucide-react";
 import { type Id } from "#/lib/convex";
 import { Button } from "#/components/ui/button";
 import { ShareDialog } from "./share-dialog";
+import { NoteActionsDropdown } from "#/components/library/note-actions-menu";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 type DocumentHeaderProps = {
   title: string;
   documentId: Id<"documents">;
+  folderId?: Id<"folders">;
   isPublic?: boolean;
   onBack: () => void;
+  onDelete?: () => void;
   saveStatus?: SaveStatus;
 };
 
 export function DocumentHeader({
   title,
   documentId,
+  folderId,
   isPublic,
   onBack,
+  onDelete,
   saveStatus,
 }: DocumentHeaderProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -54,9 +59,7 @@ export function DocumentHeader({
           <Share className="w-3 h-3" />
           Share
         </Button>
-        <Button variant="outline" size="icon" className="w-7 h-7">
-          <MoreHorizontal className="w-3.5 h-3.5" />
-        </Button>
+        <NoteActionsDropdown documentId={documentId} folderId={folderId} onDelete={onDelete} />
       </div>
 
       <ShareDialog

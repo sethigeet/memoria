@@ -36,6 +36,7 @@ function DocumentRoute() {
   const { save: saveContent, status: saveStatus } = useDebouncedSave(handleSaveContent, 2000);
 
   const onBack = () => navigate({ to: "/" });
+  const handleDelete = () => navigate({ to: "/" });
 
   if (!document) {
     return <LoadingSplash fullScreen={false} />;
@@ -52,8 +53,10 @@ function DocumentRoute() {
       <DocumentHeader
         title={document.title}
         documentId={documentId}
+        folderId={document.folderId}
         isPublic={document.isPublic}
         onBack={onBack}
+        onDelete={handleDelete}
         saveStatus={isNote ? saveStatus : undefined}
       />
 

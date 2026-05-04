@@ -289,7 +289,7 @@ async function updateDocumentHelper(
     title?: string;
     content?: string;
     notebook?: string;
-    folderId?: Id<"folders">;
+    folderId?: Id<"folders"> | null;
     summary?: string | null;
     summaryType?: string | null;
   },
@@ -306,7 +306,7 @@ async function updateDocumentHelper(
     updates.excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
   }
   if (args.notebook !== undefined) updates.notebook = args.notebook;
-  if (args.folderId !== undefined) updates.folderId = args.folderId;
+  if (args.folderId !== undefined) updates.folderId = args.folderId ?? undefined;
   if (args.summary !== undefined) updates.summary = args.summary ?? undefined;
   if (args.summaryType !== undefined) updates.summaryType = args.summaryType ?? undefined;
 
@@ -316,14 +316,14 @@ async function updateDocumentHelper(
     title: args.title ?? existingDocument.title,
     content: args.content ?? existingDocument.content,
     source: existingDocument.source,
-    folderId: args.folderId ?? existingDocument.folderId,
+    folderId: args.folderId !== undefined ? (args.folderId ?? undefined) : existingDocument.folderId,
   });
   return id;
 }
 
 async function ensureOwnedFolder(
   ctx: MutationCtx,
-  folderId: Id<"folders"> | undefined,
+  folderId: Id<"folders"> | null | undefined,
   userId: string,
 ) {
   if (!folderId) return;
@@ -340,7 +340,7 @@ export const update = mutation({
     title: v.optional(v.string()),
     content: v.optional(v.string()),
     notebook: v.optional(v.string()),
-    folderId: v.optional(v.id("folders")),
+    folderId: v.optional(v.union(v.id("folders"), v.null())),
     summary: v.optional(v.union(v.string(), v.null())),
     summaryType: v.optional(v.union(v.string(), v.null())),
   },

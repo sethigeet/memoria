@@ -13,13 +13,7 @@ import {
   SelectValue,
 } from "#/components/ui/select";
 import { Link, FileText, Edit3, Loader2 } from "lucide-react";
-
-type FolderItem = {
-  _id: Id<"folders">;
-  name: string;
-  color: string;
-  depth: number;
-};
+import { flattenFolders } from "#/lib/folder-tree";
 
 interface CreateModalProps {
   open: boolean;
@@ -50,28 +44,8 @@ export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps
   const generateTitleAndTags = useAction(api.ai.generateTitleAndTags);
 
   const foldersKey = folders.map((f) => `${f._id}:${f.parentId}`).join(",");
-  const flatFolders = useMemo(() => {
-    const result: FolderItem[] = [];
-    const childrenMap = new Map<string | undefined, typeof folders>();
-
-    for (const f of folders) {
-      const key = f.parentId ?? "root";
-      if (!childrenMap.has(key)) childrenMap.set(key, []);
-      childrenMap.get(key)!.push(f);
-    }
-
-    const traverse = (parentId: string | undefined, depth: number) => {
-      const children = childrenMap.get(parentId ?? "root") ?? [];
-      for (const c of children) {
-        result.push({ _id: c._id, name: c.name, color: c.color, depth });
-        traverse(c._id, depth + 1);
-      }
-    };
-
-    traverse(undefined, 0);
-    return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [foldersKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const flatFolders = useMemo(() => flattenFolders(folders), [foldersKey]);
 
   const handleCreate = async () => {
     setProcessing(true);
