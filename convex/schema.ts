@@ -26,6 +26,11 @@ export default defineSchema({
     source: v.optional(v.string()),
     content: v.string(),
     excerpt: v.optional(v.string()),
+    searchText: v.optional(v.string()),
+    searchTagNames: v.optional(v.array(v.string())),
+    searchFolderName: v.optional(v.string()),
+    searchFolderLabel: v.optional(v.string()),
+    searchSourceText: v.optional(v.string()),
     folderId: v.optional(v.id("folders")),
     userId: v.string(),
     deletedAt: v.optional(v.number()),
@@ -50,12 +55,8 @@ export default defineSchema({
     .index("by_userId_and_type", ["userId", "type"])
     .index("by_deletedAt", ["deletedAt"])
     .index("by_isPublic", ["isPublic"])
-    .searchIndex("search_content", {
-      searchField: "content",
-      filterFields: ["userId"],
-    })
-    .searchIndex("search_title", {
-      searchField: "title",
+    .searchIndex("search_text", {
+      searchField: "searchText",
       filterFields: ["userId"],
     }),
 

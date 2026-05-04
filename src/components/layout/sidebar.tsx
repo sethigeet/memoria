@@ -4,7 +4,6 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { api, type Id } from "#/lib/convex";
 import { Link, useNavigate, useMatch, useLocation } from "@tanstack/react-router";
 import { Button } from "#/components/ui/button";
-import { Input } from "#/components/ui/input";
 import { Logo } from "#/components/ui/logo";
 import { ScrollArea, ScrollBar } from "#/components/ui/scroll-area";
 import { Home, Search, Plus, Trash2 } from "lucide-react";
@@ -16,7 +15,7 @@ import type { FolderWithChildren } from "./sidebar/types";
 
 interface SidebarProps {
   onNewNote: (folderId?: Id<"folders">) => void;
-  onSearch: (query: string) => void;
+  onOpenSearch: () => void;
 }
 
 const FOLDER_COLORS = [
@@ -34,7 +33,7 @@ export const SIDEBAR_MIN_WIDTH = 180;
 export const SIDEBAR_MAX_WIDTH = 400;
 export const SIDEBAR_DEFAULT_WIDTH = 232;
 
-export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
+export function Sidebar({ onNewNote, onOpenSearch }: SidebarProps) {
   const { signOut } = useAuthActions();
   const folders = useQuery(api.folders.list);
   const tags = useQuery(api.tags.list);
@@ -55,7 +54,6 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
 
   const [foldersOpen, setFoldersOpen] = useState(true);
   const [tagsOpen, setTagsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [creatingFolder, setCreatingFolder] = useState<Id<"folders"> | "root" | null>(null);
   const [newFolderName, setNewFolderName] = useState("");
@@ -85,11 +83,6 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
 
     return roots;
   }, [folders]);
-
-  const handleSearch = (event: React.FormEvent) => {
-    event.preventDefault();
-    onSearch(searchQuery);
-  };
 
   const toggleFolderExpand = (id: string) => {
     setExpandedFolders((previous) => {
@@ -156,17 +149,23 @@ export function Sidebar({ onNewNote, onSearch }: SidebarProps) {
           </Button>
         </div>
 
-        <form onSubmit={handleSearch} className="px-2.5 pb-2">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              className="pl-9 h-8 text-sm bg-sidebar-accent border-sidebar-border"
-            />
-          </div>
-        </form>
+        <div className="px-2.5 pb-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onOpenSearch}
+            className="h-9 w-full justify-between border-sidebar-border bg-sidebar-accent/70 px-3 text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
+          >
+            <span className="flex items-center gap-2">
+              <Search className="h-3.5 w-3.5" />
+              Search library
+            </span>
+            <span className="rounded-md border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+              Ctrl K
+            </span>
+          </Button>
+        </div>
 
         <ScrollArea className="flex-1">
           <div className="px-1.5 min-w-max">

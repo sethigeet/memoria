@@ -11,6 +11,82 @@ import { getAuthUserId } from "@convex-dev/auth/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { pruneTagIfUnused, removeDocumentTagsAndPrune } from "./tagCleanup";
 
+function normalizeSearchText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/https?:\/\//g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function getSourceTokens(source: string | undefined) {
+  if (!source) return "";
+
+  const values = [source];
+  try {
+    const url = new URL(source);
+    values.push(url.hostname.replace(/^www\./, ""));
+    values.push(url.pathname.replace(/\//g, " "));
+  } catch {
+    values.push(source.replace(/^www\./, ""));
+  }
+
+  return normalizeSearchText(values.join(" "));
+}
+
+async function getDocumentTagNames(ctx: MutationCtx, documentId: Id<"documents">) {
+  const documentTags = await ctx.db
+    .query("documentTags")
+    .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
+    .collect();
+
+  const tags = await Promise.all(documentTags.map((documentTag) => ctx.db.get(documentTag.tagId)));
+  return tags
+    .filter(Boolean)
+    .map((tag) => tag!.name.trim().toLowerCase())
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right));
+}
+
+async function buildSearchMetadata(
+  ctx: MutationCtx,
+  document: Pick<Doc<"documents">, "_id" | "title" | "content" | "source" | "folderId">,
+  tagNames?: string[],
+) {
+  const folder = document.folderId ? await ctx.db.get(document.folderId) : null;
+  const normalizedTagNames = (tagNames ?? (await getDocumentTagNames(ctx, document._id))).map(
+    (tag) => tag.trim().toLowerCase(),
+  );
+  const searchFolderName = normalizeSearchText(folder?.name ?? "");
+  const searchSourceText = getSourceTokens(document.source);
+  const searchText = normalizeSearchText(
+    [
+      document.title,
+      document.content,
+      normalizedTagNames.join(" "),
+      folder?.name ?? "",
+      searchSourceText,
+    ].join(" "),
+  );
+
+  return {
+    searchText,
+    searchTagNames: normalizedTagNames,
+    searchFolderName,
+    searchFolderLabel: folder?.name ?? "",
+    searchSourceText,
+  };
+}
+
+async function syncDocumentSearchMetadata(
+  ctx: MutationCtx,
+  document: Pick<Doc<"documents">, "_id" | "title" | "content" | "source" | "folderId">,
+  tagNames?: string[],
+) {
+  const metadata = await buildSearchMetadata(ctx, document, tagNames);
+  await ctx.db.patch(document._id, metadata);
+}
+
 export const list = query({
   args: {
     folderId: v.optional(v.id("folders")),
@@ -135,13 +211,25 @@ export const create = mutation({
     await ensureOwnedFolder(ctx, args.folderId, userId);
 
     const excerpt = args.content.slice(0, 200) + (args.content.length > 200 ? "..." : "");
+    const source = args.source;
+    const searchSourceText = getSourceTokens(source);
+    const folder = args.folderId ? await ctx.db.get(args.folderId) : null;
+    const searchFolderName = normalizeSearchText(folder?.name ?? "");
+    const searchText = normalizeSearchText(
+      [args.title, args.content, folder?.name ?? "", searchSourceText].join(" "),
+    );
 
     const documentId = await ctx.db.insert("documents", {
       type: args.type,
       title: args.title,
       content: args.content,
-      source: args.source,
+      source,
       excerpt,
+      searchText,
+      searchTagNames: [],
+      searchFolderName,
+      searchFolderLabel: folder?.name ?? "",
+      searchSourceText,
       folderId: args.folderId,
       userId,
     });
@@ -162,6 +250,12 @@ export const createFromUrl = mutation({
 
     const url = args.url.startsWith("http") ? args.url : `https://${args.url}`;
     const source = url;
+    const searchSourceText = getSourceTokens(source);
+    const folder = args.folderId ? await ctx.db.get(args.folderId) : null;
+    const searchFolderName = normalizeSearchText(folder?.name ?? "");
+    const searchText = normalizeSearchText(
+      [url, "Fetching content...", folder?.name ?? ""].join(" "),
+    );
 
     const documentId = await ctx.db.insert("documents", {
       type: "web",
@@ -169,6 +263,11 @@ export const createFromUrl = mutation({
       content: "Fetching content...",
       source,
       excerpt: "Fetching content...",
+      searchText,
+      searchTagNames: [],
+      searchFolderName,
+      searchFolderLabel: folder?.name ?? "",
+      searchSourceText,
       folderId: args.folderId,
       userId,
       scrapingStatus: "pending",
@@ -195,6 +294,11 @@ async function updateDocumentHelper(
     summaryType?: string | null;
   },
 ) {
+  const existingDocument = await ctx.db.get(id);
+  if (!existingDocument) {
+    throw new Error("Document not found");
+  }
+
   const updates: Record<string, unknown> = {};
   if (args.title !== undefined) updates.title = args.title;
   if (args.content !== undefined) {
@@ -207,6 +311,13 @@ async function updateDocumentHelper(
   if (args.summaryType !== undefined) updates.summaryType = args.summaryType ?? undefined;
 
   await ctx.db.patch(id, updates);
+  await syncDocumentSearchMetadata(ctx, {
+    _id: id,
+    title: args.title ?? existingDocument.title,
+    content: args.content ?? existingDocument.content,
+    source: existingDocument.source,
+    folderId: args.folderId ?? existingDocument.folderId,
+  });
   return id;
 }
 
@@ -339,49 +450,50 @@ export const permanentlyDelete = mutation({
 });
 
 export const search = query({
-  args: { query: v.string() },
+  args: { query: v.string(), limit: v.optional(v.number()) },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);
     if (!userId) return [];
 
-    const titleResults = await ctx.db
-      .query("documents")
-      .withSearchIndex("search_title", (q) => q.search("title", args.query).eq("userId", userId))
-      .take(20);
+    const limit = Math.max(1, Math.min(args.limit ?? 20, 20));
+    const normalizedQuery = normalizeSearchText(args.query);
+    if (!normalizedQuery) return [];
 
-    const contentResults = await ctx.db
+    const results = await ctx.db
       .query("documents")
-      .withSearchIndex("search_content", (q) =>
-        q.search("content", args.query).eq("userId", userId),
+      .withSearchIndex("search_text", (q) =>
+        q.search("searchText", normalizedQuery).eq("userId", userId),
       )
-      .take(20);
+      .take(limit * 2);
 
-    // Merge, deduplicate, and filter deleted
-    const seen = new Set<string>();
-    const results: typeof titleResults = [];
-    for (const doc of [...titleResults, ...contentResults]) {
-      if (!seen.has(doc._id) && !doc.deletedAt) {
-        seen.add(doc._id);
-        results.push(doc);
-      }
+    return results
+      .filter((document) => !document.deletedAt)
+      .slice(0, limit)
+      .map((document) => ({
+        ...document,
+        tags: document.searchTagNames ?? [],
+        folderName: document.searchFolderLabel ?? "",
+        sourceText: document.searchSourceText ?? "",
+      }));
+  },
+});
+
+export const backfillSearchMetadata = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const documents = await ctx.db
+      .query("documents")
+      .withIndex("by_userId", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const document of documents) {
+      await syncDocumentSearchMetadata(ctx, document);
     }
 
-    // Add tags to results
-    const resultsWithTags = await Promise.all(
-      results.slice(0, 15).map(async (doc) => {
-        const docTags = await ctx.db
-          .query("documentTags")
-          .withIndex("by_documentId", (q) => q.eq("documentId", doc._id))
-          .collect();
-        const tags = await Promise.all(docTags.map((dt) => ctx.db.get(dt.tagId)));
-        return {
-          ...doc,
-          tags: tags.filter(Boolean).map((t) => t!.name),
-        };
-      }),
-    );
-
-    return resultsWithTags;
+    return documents.length;
   },
 });
 
@@ -430,6 +542,12 @@ async function addTagsHelper(
         await ctx.db.insert("documentTags", { documentId, tagId: tag._id });
       }
     }
+  }
+
+  const document = await ctx.db.get(documentId);
+  if (document) {
+    const tagNames = await getDocumentTagNames(ctx, documentId);
+    await syncDocumentSearchMetadata(ctx, document, tagNames);
   }
 }
 
@@ -496,6 +614,12 @@ export const removeTags = mutation({
         }
       }
     }
+
+    const document = await ctx.db.get(args.documentId);
+    if (document) {
+      const tagNames = await getDocumentTagNames(ctx, args.documentId);
+      await syncDocumentSearchMetadata(ctx, document, tagNames);
+    }
   },
 });
 
@@ -535,9 +659,7 @@ export const updateTags = mutation({
       await pruneTagIfUnused(ctx, tag._id);
     }
 
-    const existingTagNames = new Set(
-      existingTags.flatMap(({ tag }) => (tag ? [tag.name] : [])),
-    );
+    const existingTagNames = new Set(existingTags.flatMap(({ tag }) => (tag ? [tag.name] : [])));
     const tagsToAdd = args.tags.filter((tagName) => !existingTagNames.has(tagName));
 
     if (tagsToAdd.length === 0) {
@@ -545,6 +667,25 @@ export const updateTags = mutation({
     }
 
     await addTagsHelper(ctx, args.documentId, tagsToAdd, userId);
+
+    const document = await ctx.db.get(args.documentId);
+    if (document) {
+      await syncDocumentSearchMetadata(ctx, document, args.tags);
+    }
+  },
+});
+
+export const syncSearchMetadataForFolder = internalMutation({
+  args: { folderId: v.id("folders") },
+  handler: async (ctx, args) => {
+    const documents = await ctx.db
+      .query("documents")
+      .withIndex("by_folderId", (q) => q.eq("folderId", args.folderId))
+      .collect();
+
+    for (const document of documents) {
+      await syncDocumentSearchMetadata(ctx, document);
+    }
   },
 });
 

@@ -10,6 +10,7 @@ import {
   SIDEBAR_MIN_WIDTH,
 } from "#/components/layout/sidebar";
 import { CreateModal } from "#/components/library/create-modal";
+import { SearchDialog } from "#/components/search/search-dialog";
 import { ResizableSplit } from "#/components/ui/resizable-split";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -39,6 +40,7 @@ function AppLayout() {
   const navigate = useNavigate();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createInFolder, setCreateInFolder] = useState<Id<"folders"> | undefined>(undefined);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const handleNewNote = (folderId?: Id<"folders">) => {
     setCreateInFolder(folderId);
@@ -50,14 +52,6 @@ function AppLayout() {
     setCreateInFolder(undefined);
   };
 
-  const handleSearch = (query: string) => {
-    if (query.trim()) {
-      navigate({ to: "/search", search: { q: query } });
-    } else {
-      navigate({ to: "/" });
-    }
-  };
-
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#0e0e12]">
       <ResizableSplit
@@ -66,13 +60,20 @@ function AppLayout() {
         defaultLeftSize={SIDEBAR_DEFAULT_WIDTH}
         minLeftSize={SIDEBAR_MIN_WIDTH}
         maxLeftSize={SIDEBAR_MAX_WIDTH}
-        left={<Sidebar onNewNote={handleNewNote} onSearch={handleSearch} />}
+        left={<Sidebar onNewNote={handleNewNote} onOpenSearch={() => setSearchOpen(true)} />}
         right={<Outlet />}
       />
       <CreateModal
         open={showCreateModal}
         onClose={handleCloseCreateModal}
         initialFolderId={createInFolder}
+      />
+      <SearchDialog
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        onSelectResult={(documentId) =>
+          navigate({ to: "/document/$documentId", params: { documentId } })
+        }
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
+import { internal } from "./_generated/api";
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { removeDocumentTagsAndPrune } from "./tagCleanup";
 
@@ -153,6 +154,11 @@ export const update = mutation({
     if (args.parentId !== undefined) updates.parentId = args.parentId ?? undefined;
 
     await ctx.db.patch(args.id, updates);
+    if (args.name !== undefined) {
+      await ctx.runMutation(internal.documents.syncSearchMetadataForFolder, {
+        folderId: args.id,
+      });
+    }
     return args.id;
   },
 });
