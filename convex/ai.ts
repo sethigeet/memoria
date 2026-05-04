@@ -45,7 +45,17 @@ async function generateTitleAndTagsForDocument(
   ctx: ActionCtx,
   documentId: Id<"documents">,
   content: string,
+  userId: string,
 ): Promise<GeneratedTitleAndTagsResponse> {
+  const existingTags: string[] = await ctx.runQuery(internal.tags.listNamesForUser, { userId });
+  const existingTagsContext =
+    existingTags.length > 0
+      ? `Existing user tags:
+${existingTags.map((tag) => `- ${tag}`).join("\n")}
+
+When choosing tags, prefer reusing an existing tag if it already means the same thing as the concept you want to tag. For example, if an existing tag is "ai" do not create "artificial-intelligence"; use "ai". Only create a new tag when none of the existing tags fit.`
+      : "The user does not have existing tags yet, so create new tags as needed.";
+
   const result = await generateText({
     model,
     output: Output.object({
@@ -58,10 +68,12 @@ async function generateTitleAndTagsForDocument(
     }),
     prompt: `Analyze the following content and generate a title and tags for it.
 
+${existingTagsContext}
+
 Content:
 ${content.slice(0, 4000)}
 
-Generate a concise title and 3-5 relevant tags for categorization.`,
+Generate a concise title and 3-5 relevant tags for categorization. Tags must be lowercase and hyphenated when they contain multiple words.`,
   });
 
   await ctx.runMutation(internal.documents.internalUpdate, {
@@ -85,7 +97,7 @@ export const generateTitleAndTags = action({
   handler: async (ctx, args): Promise<GeneratedTitleAndTagsResponse> => {
     const doc = await requireOwnedDocument(ctx, args.documentId);
 
-    return await generateTitleAndTagsForDocument(ctx, args.documentId, doc.content);
+    return await generateTitleAndTagsForDocument(ctx, args.documentId, doc.content, doc.userId);
   },
 });
 
@@ -103,7 +115,7 @@ export const generateTitleAndTagsInternal = internalAction({
       throw new Error("Document not found");
     }
 
-    return await generateTitleAndTagsForDocument(ctx, args.documentId, doc.content);
+    return await generateTitleAndTagsForDocument(ctx, args.documentId, doc.content, doc.userId);
   },
 });
 

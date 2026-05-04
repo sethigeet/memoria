@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalQuery } from "./_generated/server";
 import { getAuthUserId } from "@convex-dev/auth/server";
 
 export const list = query({
@@ -12,6 +12,18 @@ export const list = query({
       .query("tags")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
       .collect();
+  },
+});
+
+export const listNamesForUser = internalQuery({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const tags = await ctx.db
+      .query("tags")
+      .withIndex("by_userId", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    return tags.map((tag) => tag.name).sort((a, b) => a.localeCompare(b));
   },
 });
 
