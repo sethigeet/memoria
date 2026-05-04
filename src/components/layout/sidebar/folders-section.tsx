@@ -126,7 +126,7 @@ function FolderTreeItem({
           <Link
             to="/folder/$folderId"
             params={{ folderId: folder._id }}
-            className={`group flex items-center gap-1.5 py-1.5 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 whitespace-nowrap pr-2 cursor-pointer ${
+            className={`group flex items-center gap-1.5 py-1.5 rounded-md text-[13px] transition-colors mx-1.5 my-0.5 pr-2 cursor-pointer min-w-0 ${
               activeFolder === folder._id
                 ? "bg-sidebar-accent text-sidebar-accent-foreground"
                 : "text-muted-foreground hover:bg-sidebar-accent/50"
@@ -311,8 +311,8 @@ export function SidebarFoldersSection({
   onDeleteFolder,
 }: SidebarFoldersSectionProps) {
   return (
-    <div className="mt-2">
-      <div className="flex items-center justify-between pr-3">
+    <div className="mt-2 min-w-0">
+      <div className="flex items-center justify-between pr-3 min-w-0">
         <button
           onClick={onToggleFoldersOpen}
           className="flex items-center gap-1.5 px-4 py-1 text-[10.5px] font-bold tracking-wider uppercase text-muted-foreground cursor-pointer"
