@@ -316,7 +316,8 @@ async function updateDocumentHelper(
     title: args.title ?? existingDocument.title,
     content: args.content ?? existingDocument.content,
     source: existingDocument.source,
-    folderId: args.folderId !== undefined ? (args.folderId ?? undefined) : existingDocument.folderId,
+    folderId:
+      args.folderId !== undefined ? (args.folderId ?? undefined) : existingDocument.folderId,
   });
   return id;
 }

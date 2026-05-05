@@ -92,11 +92,7 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
             >
               {config.label}
             </span>
-            <ReadingProgressIndicator
-              readAt={note.readAt}
-              progress={note.readProgress}
-              compact
-            />
+            <ReadingProgressIndicator readAt={note.readAt} progress={note.readProgress} compact />
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground">

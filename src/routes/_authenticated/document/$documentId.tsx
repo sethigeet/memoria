@@ -81,7 +81,10 @@ function DocumentRoute() {
         minLeftSize={35}
         maxLeftSize={80}
         left={
-          <div ref={scrollContainerRef} className="flex flex-col min-h-0 flex-1 pb-5 overflow-y-auto">
+          <div
+            ref={scrollContainerRef}
+            className="flex flex-col min-h-0 flex-1 pb-5 overflow-y-auto"
+          >
             <DocumentMeta
               documentId={documentId}
               type={document.type}

@@ -73,7 +73,9 @@ export function useKeyboardShortcuts({ shortcuts, enabled = true }: UseKeyboardS
   }, [handleKeyDown]);
 }
 
-export function formatShortcut(shortcut: Pick<Shortcut, "key" | "ctrl" | "meta" | "shift" | "alt">): string {
+export function formatShortcut(
+  shortcut: Pick<Shortcut, "key" | "ctrl" | "meta" | "shift" | "alt">,
+): string {
   const parts: string[] = [];
   const isMac = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.userAgent);
 

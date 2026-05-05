@@ -232,7 +232,7 @@ export function Sidebar({ onNewNote, onOpenSearch }: SidebarProps) {
               </Link>
             </div>
           </div>
-                  </ScrollArea>
+        </ScrollArea>
 
         <SidebarUserSection user={currentUser} onSignOut={() => signOut()} />
       </div>

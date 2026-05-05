@@ -79,4 +79,3 @@ If `NIM_API_KEY` is configured, Memoria can:
 - answer questions about a document using its stored content
 
 If the key is not present, the core library features still work, but AI-dependent features will not.
-

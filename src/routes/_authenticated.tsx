@@ -130,11 +130,7 @@ function AppLayout() {
           navigate({ to: "/document/$documentId", params: { documentId } })
         }
       />
-      <ShortcutsDialog
-        open={shortcutsOpen}
-        onOpenChange={setShortcutsOpen}
-        shortcuts={shortcuts}
-      />
+      <ShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} shortcuts={shortcuts} />
     </div>
   );
 }

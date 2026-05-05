@@ -7,7 +7,11 @@ interface ReadingProgressProps {
   compact?: boolean;
 }
 
-export function ReadingProgressIndicator({ readAt, progress = 0, compact = false }: ReadingProgressProps) {
+export function ReadingProgressIndicator({
+  readAt,
+  progress = 0,
+  compact = false,
+}: ReadingProgressProps) {
   const isRead = !!readAt;
   const hasProgress = progress > 0 && progress < 90;
 

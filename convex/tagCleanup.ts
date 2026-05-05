@@ -15,10 +15,7 @@ export async function pruneTagIfUnused(ctx: MutationCtx, tagId: Id<"tags">) {
   }
 }
 
-export async function removeDocumentTagsAndPrune(
-  ctx: MutationCtx,
-  documentId: Id<"documents">,
-) {
+export async function removeDocumentTagsAndPrune(ctx: MutationCtx, documentId: Id<"documents">) {
   const docTags = await ctx.db
     .query("documentTags")
     .withIndex("by_documentId", (q) => q.eq("documentId", documentId))
