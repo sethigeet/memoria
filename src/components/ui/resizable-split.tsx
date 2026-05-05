@@ -20,6 +20,8 @@ type ResizableSplitProps = {
   bigStep?: number;
   storageKey?: string;
   className?: string;
+  /** When true, collapses the right panel and expands left to full width */
+  rightCollapsed?: boolean;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
@@ -35,6 +37,7 @@ export function ResizableSplit({
   bigStep,
   storageKey,
   className,
+  rightCollapsed = false,
 }: ResizableSplitProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [leftSize, setLeftSize] = useState(() => {
@@ -112,12 +115,12 @@ export function ResizableSplit({
     }
   };
 
-  const leftWidth = unit === "%" ? `${leftSize}%` : `${leftSize}px`;
+  const leftWidth = rightCollapsed ? "100%" : unit === "%" ? `${leftSize}%` : `${leftSize}px`;
 
   return (
     <div ref={containerRef} className={cn("flex min-h-0 min-w-0 flex-1", className)}>
       <div
-        className="flex min-h-0 min-w-0 flex-col overflow-hidden shrink-0"
+        className="flex min-h-0 min-w-0 flex-col overflow-hidden shrink-0 transition-[width] duration-300 ease-out"
         style={{ width: leftWidth }}
       >
         {left}
@@ -132,17 +135,21 @@ export function ResizableSplit({
         aria-label="Resize panels"
         tabIndex={0}
         onMouseDown={(e) => {
+          if (rightCollapsed) return;
           e.preventDefault();
           setDragging(true);
         }}
-        onDoubleClick={() => setLeftSize(defaultLeftSize)}
-        onKeyDown={onKeyDown}
+        onDoubleClick={() => !rightCollapsed && setLeftSize(defaultLeftSize)}
+        onKeyDown={rightCollapsed ? undefined : onKeyDown}
         className={cn(
-          "group relative w-px shrink-0 cursor-col-resize bg-border transition-colors",
+          "group relative w-px shrink-0 bg-border transition-all duration-300",
+          !rightCollapsed && "cursor-col-resize",
           "before:absolute before:inset-y-0 before:-left-1.5 before:-right-1.5 before:content-['']",
           "after:pointer-events-none after:absolute after:inset-y-0 after:left-1/2 after:-translate-x-1/2 after:w-px after:bg-primary/0 after:transition-colors",
-          "hover:after:bg-primary/50 focus-visible:outline-none focus-visible:after:bg-primary",
+          !rightCollapsed &&
+            "hover:after:bg-primary/50 focus-visible:outline-none focus-visible:after:bg-primary",
           dragging && "after:bg-primary",
+          rightCollapsed && "w-0 opacity-0",
         )}
       >
         <div
@@ -155,7 +162,14 @@ export function ResizableSplit({
         />
       </div>
 
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{right}</div>
+      <div
+        className={cn(
+          "flex min-h-0 min-w-0 flex-col overflow-hidden transition-all duration-300 ease-out",
+          rightCollapsed ? "w-0 opacity-0" : "flex-1 opacity-100",
+        )}
+      >
+        {right}
+      </div>
     </div>
   );
 }
