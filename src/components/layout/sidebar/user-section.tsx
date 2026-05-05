@@ -1,4 +1,5 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Keyboard } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "#/components/ui/tooltip";
 
 interface SidebarUserSectionProps {
   user:
@@ -30,12 +31,40 @@ export function SidebarUserSection({ user, onSignOut }: SidebarUserSectionProps)
         <div className="text-[13px] font-medium truncate">{displayName}</div>
         <div className="text-[11px] text-muted-foreground truncate">{detailText}</div>
       </div>
-      <button
-        onClick={onSignOut}
-        className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground"
-      >
-        <LogOut className="w-4 h-4" />
-      </button>
+      <div className="flex items-center gap-0.5">
+        <TooltipProvider delayDuration={200}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={() => {
+                  const event = new KeyboardEvent("keydown", {
+                    key: "?",
+                    shiftKey: true,
+                    bubbles: true,
+                  });
+                  window.dispatchEvent(event);
+                }}
+                className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground transition-colors"
+              >
+                <Keyboard className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="text-[11px]">
+              Keyboard shortcuts
+              <kbd className="ml-1.5 rounded border border-white/10 bg-white/5 px-1 py-0.5 font-mono text-[10px]">
+                ?
+              </kbd>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+        <button
+          onClick={onSignOut}
+          className="p-1.5 rounded-md hover:bg-sidebar-accent text-muted-foreground"
+        >
+          <LogOut className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

@@ -24,7 +24,7 @@ interface CreateModalProps {
 type TabType = "url" | "pdf" | "note";
 
 export function CreateModal({ open, onClose, initialFolderId }: CreateModalProps) {
-  const [tab, setTab] = useState<TabType>("note");
+  const [tab, setTab] = useState<TabType>("url");
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");

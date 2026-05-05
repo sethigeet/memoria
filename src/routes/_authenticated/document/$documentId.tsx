@@ -12,6 +12,7 @@ import { RichEditor } from "#/components/editor/rich-editor";
 import { useDebouncedSave } from "#/components/editor/use-debounced-save";
 import { ResizableSplit } from "#/components/ui/resizable-split";
 import { ScrapingFailedState, ScrapingPendingState } from "#/components/document/scraping-states";
+import { useScrollProgress } from "#/hooks/use-scroll-progress";
 
 export const Route = createFileRoute("/_authenticated/document/$documentId")({
   component: DocumentRoute,
@@ -34,6 +35,20 @@ function DocumentRoute() {
   );
 
   const { save: saveContent, status: saveStatus } = useDebouncedSave(handleSaveContent, 2000);
+
+  const updateReadProgress = useMutation(api.documents.updateReadProgress);
+  const handleScrollProgress = useCallback(
+    (progress: number) => {
+      updateReadProgress({ id: documentId, progress });
+    },
+    [documentId, updateReadProgress],
+  );
+
+  const scrollContainerRef = useScrollProgress({
+    onProgress: handleScrollProgress,
+    debounceMs: 1000,
+    enabled: !!document && !document.readAt,
+  });
 
   const onBack = () => navigate({ to: "/" });
   const handleDelete = () => navigate({ to: "/" });
@@ -66,7 +81,7 @@ function DocumentRoute() {
         minLeftSize={35}
         maxLeftSize={80}
         left={
-          <div className="flex flex-col min-h-0 flex-1 pb-5 overflow-y-auto">
+          <div ref={scrollContainerRef} className="flex flex-col min-h-0 flex-1 pb-5 overflow-y-auto">
             <DocumentMeta
               documentId={documentId}
               type={document.type}

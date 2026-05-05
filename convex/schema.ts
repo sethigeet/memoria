@@ -39,6 +39,9 @@ export default defineSchema({
     // AI-generated fields
     summary: v.optional(v.string()),
     summaryType: v.optional(v.string()),
+    // Reading progress
+    readAt: v.optional(v.number()),
+    readProgress: v.optional(v.number()),
     // Scraping status
     scrapingStatus: v.optional(
       v.union(

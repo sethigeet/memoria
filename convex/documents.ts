@@ -689,6 +689,64 @@ export const syncSearchMetadataForFolder = internalMutation({
   },
 });
 
+export const updateReadProgress = mutation({
+  args: {
+    id: v.id("documents"),
+    progress: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== userId) {
+      throw new Error("Document not found");
+    }
+
+    const progress = Math.max(0, Math.min(100, args.progress));
+    const updates: { readProgress: number; readAt?: number } = { readProgress: progress };
+
+    if (progress >= 90 && !doc.readAt) {
+      updates.readAt = Date.now();
+    }
+
+    await ctx.db.patch(args.id, updates);
+    return args.id;
+  },
+});
+
+export const markAsRead = mutation({
+  args: { id: v.id("documents") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== userId) {
+      throw new Error("Document not found");
+    }
+
+    await ctx.db.patch(args.id, { readAt: Date.now(), readProgress: 100 });
+    return args.id;
+  },
+});
+
+export const markAsUnread = mutation({
+  args: { id: v.id("documents") },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+
+    const doc = await ctx.db.get(args.id);
+    if (!doc || doc.userId !== userId) {
+      throw new Error("Document not found");
+    }
+
+    await ctx.db.patch(args.id, { readAt: undefined, readProgress: undefined });
+    return args.id;
+  },
+});
+
 export const togglePublic = mutation({
   args: { id: v.id("documents"), isPublic: v.boolean() },
   handler: async (ctx, args) => {

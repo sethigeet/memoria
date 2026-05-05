@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { FolderInput, MoreHorizontal, Trash2 } from "lucide-react";
+import { FolderInput, MoreHorizontal, Trash2, Check, Circle } from "lucide-react";
 import { api, type Id } from "#/lib/convex";
 import { flattenFolders } from "#/lib/folder-tree";
 import { Button } from "#/components/ui/button";
@@ -32,17 +32,20 @@ import {
 type NoteActionsProps = {
   documentId: Id<"documents">;
   folderId?: Id<"folders">;
+  readAt?: number;
   onDelete?: () => void;
 };
 
 const ROOT_FOLDER_VALUE = "__root__";
 
-export function NoteActionsDropdown({ documentId, folderId, onDelete }: NoteActionsProps) {
-  const { moveToFolder, deleteNote, selectedFolderValue, flatFolders } = useNoteActions({
-    documentId,
-    folderId,
-    onDelete,
-  });
+export function NoteActionsDropdown({ documentId, folderId, readAt, onDelete }: NoteActionsProps) {
+  const { moveToFolder, deleteNote, toggleReadStatus, selectedFolderValue, flatFolders, isRead } =
+    useNoteActions({
+      documentId,
+      folderId,
+      readAt,
+      onDelete,
+    });
 
   return (
     <DropdownMenu>
@@ -52,6 +55,19 @@ export function NoteActionsDropdown({ documentId, folderId, onDelete }: NoteActi
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem onClick={toggleReadStatus}>
+          {isRead ? (
+            <>
+              <Circle className="w-4 h-4" />
+              Mark as unread
+            </>
+          ) : (
+            <>
+              <Check className="w-4 h-4" />
+              Mark as read
+            </>
+          )}
+        </DropdownMenuItem>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <FolderInput className="w-4 h-4" />
@@ -87,24 +103,41 @@ export function NoteActionsDropdown({ documentId, folderId, onDelete }: NoteActi
 
 type NoteCardContextMenuProps = NoteActionsProps & {
   children: ReactNode;
+  readAt?: number;
 };
 
 export function NoteCardContextMenu({
   documentId,
   folderId,
+  readAt,
   onDelete,
   children,
 }: NoteCardContextMenuProps) {
-  const { moveToFolder, deleteNote, selectedFolderValue, flatFolders } = useNoteActions({
-    documentId,
-    folderId,
-    onDelete,
-  });
+  const { moveToFolder, deleteNote, toggleReadStatus, selectedFolderValue, flatFolders, isRead } =
+    useNoteActions({
+      documentId,
+      folderId,
+      readAt,
+      onDelete,
+    });
 
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-52">
+        <ContextMenuItem onClick={toggleReadStatus}>
+          {isRead ? (
+            <>
+              <Circle className="w-4 h-4" />
+              Mark as unread
+            </>
+          ) : (
+            <>
+              <Check className="w-4 h-4" />
+              Mark as read
+            </>
+          )}
+        </ContextMenuItem>
         <ContextMenuSub>
           <ContextMenuSubTrigger>
             <FolderInput className="w-4 h-4" />
@@ -138,15 +171,18 @@ export function NoteCardContextMenu({
   );
 }
 
-function useNoteActions({ documentId, folderId, onDelete }: NoteActionsProps) {
+function useNoteActions({ documentId, folderId, readAt, onDelete }: NoteActionsProps) {
   const folders = useQuery(api.folders.list) ?? [];
   const updateDocument = useMutation(api.documents.update);
   const deleteDocument = useMutation(api.documents.remove);
+  const markAsReadMutation = useMutation(api.documents.markAsRead);
+  const markAsUnreadMutation = useMutation(api.documents.markAsUnread);
 
   const foldersKey = folders.map((f) => `${f._id}:${f.parentId}`).join(",");
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const flatFolders = useMemo(() => flattenFolders(folders), [foldersKey]);
   const selectedFolderValue = folderId ?? ROOT_FOLDER_VALUE;
+  const isRead = !!readAt;
 
   const moveToFolder = async (value: string) => {
     await updateDocument({
@@ -160,10 +196,20 @@ function useNoteActions({ documentId, folderId, onDelete }: NoteActionsProps) {
     onDelete?.();
   };
 
+  const toggleReadStatus = async () => {
+    if (isRead) {
+      await markAsUnreadMutation({ id: documentId });
+    } else {
+      await markAsReadMutation({ id: documentId });
+    }
+  };
+
   return {
     flatFolders,
     selectedFolderValue,
+    isRead,
     moveToFolder,
     deleteNote,
+    toggleReadStatus,
   };
 }

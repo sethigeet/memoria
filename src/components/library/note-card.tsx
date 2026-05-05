@@ -4,6 +4,7 @@ import { api, type Id } from "#/lib/convex";
 import { Link, FileText, Edit3, Trash2, AlertTriangle, RotateCcw } from "lucide-react";
 import { Badge } from "#/components/ui/badge";
 import { NoteCardContextMenu } from "./note-actions-menu";
+import { ReadingProgressIndicator } from "./reading-progress";
 
 const typeConfig = {
   web: {
@@ -35,6 +36,8 @@ interface NoteCardProps {
     folderId?: Id<"folders">;
     scrapingStatus?: "pending" | "processing" | "completed" | "failed";
     scrapingError?: string;
+    readAt?: number;
+    readProgress?: number;
   };
   onClick: () => void;
 }
@@ -67,7 +70,7 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
   if (isError) return <ErrorNoteCard note={note} onClick={onClick} />;
 
   return (
-    <NoteCardContextMenu documentId={note._id} folderId={note.folderId}>
+    <NoteCardContextMenu documentId={note._id} folderId={note.folderId} readAt={note.readAt}>
       <div
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
@@ -83,11 +86,18 @@ export function NoteCard({ note, onClick }: NoteCardProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between gap-2">
-          <span
-            className={`text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded uppercase ${config.className}`}
-          >
-            {config.label}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-[10px] font-semibold tracking-wider px-2 py-0.5 rounded uppercase ${config.className}`}
+            >
+              {config.label}
+            </span>
+            <ReadingProgressIndicator
+              readAt={note.readAt}
+              progress={note.readProgress}
+              compact
+            />
+          </div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground">
               {formatDate(note._creationTime)}
@@ -151,7 +161,7 @@ function ProcessingNoteCard({ note, onClick }: NoteCardProps) {
   const TypeIcon = config.icon;
 
   return (
-    <NoteCardContextMenu documentId={note._id} folderId={note.folderId}>
+    <NoteCardContextMenu documentId={note._id} folderId={note.folderId} readAt={note.readAt}>
       <div
         onClick={onClick}
         className="group relative flex min-h-[140px] cursor-pointer flex-col gap-2.5 overflow-hidden rounded-[10px] border border-sky-500/20 bg-card p-[14px] transition-all duration-150 bg-[radial-gradient(circle_at_top_right,oklch(0.62_0.18_232/0.08),transparent_60%)]"
@@ -198,7 +208,7 @@ function ErrorNoteCard({ note, onClick }: NoteCardProps) {
   const TypeIcon = config.icon;
 
   return (
-    <NoteCardContextMenu documentId={note._id} folderId={note.folderId}>
+    <NoteCardContextMenu documentId={note._id} folderId={note.folderId} readAt={note.readAt}>
       <div
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
