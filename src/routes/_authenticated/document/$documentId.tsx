@@ -23,10 +23,13 @@ export const Route = createFileRoute("/_authenticated/document/$documentId")({
   component: DocumentRoute,
 });
 
+type NoteViewMode = "view" | "edit";
+
 function DocumentRoute() {
   const navigate = useNavigate();
   const [outlineOpen, setOutlineOpen] = useState(true);
   const [sidePanelOpen, setSidePanelOpen] = useState(true);
+  const [noteViewMode, setNoteViewMode] = useState<NoteViewMode>("view");
 
   const documentId = useParams({
     from: "/_authenticated/document/$documentId",
@@ -70,8 +73,6 @@ function DocumentRoute() {
     document.scrapingStatus === "pending" || document.scrapingStatus === "processing";
   const isScrapingFailed = document.scrapingStatus === "failed";
   const showSummary = !isScraping && !isScrapingFailed;
-  const isNote = document.type === "note";
-
   return (
     <div className="flex-1 h-screen flex flex-col overflow-hidden">
       <DocumentHeader
@@ -81,7 +82,9 @@ function DocumentRoute() {
         isPublic={document.isPublic}
         onBack={onBack}
         onDelete={handleDelete}
-        saveStatus={isNote ? saveStatus : undefined}
+        saveStatus={noteViewMode === "edit" ? saveStatus : undefined}
+        noteViewMode={noteViewMode}
+        onToggleViewMode={() => setNoteViewMode(noteViewMode === "view" ? "edit" : "view")}
       />
 
       <div className="flex flex-1 min-h-0 overflow-hidden">
@@ -147,15 +150,21 @@ function DocumentRoute() {
                     <ScrapingPendingState />
                   ) : isScrapingFailed ? (
                     <ScrapingFailedState error={document.scrapingError} onRemove={onBack} />
-                  ) : isNote ? (
-                    <RichEditor
-                      initialContent={document.content}
-                      onChange={saveContent}
-                      placeholder="Start writing your note..."
-                      className="max-w-[680px]"
-                    />
                   ) : (
-                    <Markdown className="max-w-[680px]">{document.content}</Markdown>
+                    <div className="max-w-[680px]">
+                      {noteViewMode === "view" ? (
+                        <Markdown>
+                          {document.content || "*No content yet. Click Edit to start writing.*"}
+                        </Markdown>
+                      ) : (
+                        <RichEditor
+                          initialContent={document.content}
+                          onChange={saveContent}
+                          placeholder="Start writing..."
+                          autoFocus
+                        />
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

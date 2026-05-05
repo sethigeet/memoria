@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { ArrowLeft, Share } from "lucide-react";
+import { ArrowLeft, Share, Pencil, Eye } from "lucide-react";
 import { type Id } from "#/lib/convex";
 import { Button } from "#/components/ui/button";
 import { ShareDialog } from "./share-dialog";
 import { NoteActionsDropdown } from "#/components/library/note-actions-menu";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
+type NoteViewMode = "view" | "edit";
 
 type DocumentHeaderProps = {
   title: string;
@@ -15,6 +16,8 @@ type DocumentHeaderProps = {
   onBack: () => void;
   onDelete?: () => void;
   saveStatus?: SaveStatus;
+  noteViewMode?: NoteViewMode;
+  onToggleViewMode?: () => void;
 };
 
 export function DocumentHeader({
@@ -25,6 +28,8 @@ export function DocumentHeader({
   onBack,
   onDelete,
   saveStatus,
+  noteViewMode,
+  onToggleViewMode,
 }: DocumentHeaderProps) {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
@@ -50,6 +55,26 @@ export function DocumentHeader({
       </div>
 
       <div className="flex gap-1.5 shrink-0">
+        {noteViewMode && onToggleViewMode && (
+          <Button
+            variant={noteViewMode === "view" ? "default" : "outline"}
+            size="sm"
+            className="gap-1.5"
+            onClick={onToggleViewMode}
+          >
+            {noteViewMode === "view" ? (
+              <>
+                <Pencil className="w-3 h-3" />
+                Edit
+              </>
+            ) : (
+              <>
+                <Eye className="w-3 h-3" />
+                Done
+              </>
+            )}
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"
