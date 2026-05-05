@@ -57,7 +57,7 @@ function DocumentRoute() {
     enabled: !!document && !document.readAt,
   });
 
-  const { headings, activeId, scrollToHeading, minLevel } = useDocumentOutline(contentContainerRef);
+  const { headings, activeId, scrollToHeading, minLevel } = useDocumentOutline(contentContainerRef, document?.content);
 
   const onBack = () => navigate({ to: "/" });
   const handleDelete = () => navigate({ to: "/" });

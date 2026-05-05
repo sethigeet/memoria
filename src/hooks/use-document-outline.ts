@@ -7,7 +7,7 @@ export type HeadingItem = {
   element?: HTMLElement;
 };
 
-export function useDocumentOutline(containerRef: React.RefObject<HTMLElement | null>) {
+export function useDocumentOutline(containerRef: React.RefObject<HTMLElement | null>, content?: string) {
   const [headings, setHeadings] = useState<HeadingItem[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -41,7 +41,10 @@ export function useDocumentOutline(containerRef: React.RefObject<HTMLElement | n
   }, [containerRef]);
 
   useEffect(() => {
-    extractHeadings();
+    // Delay extraction to ensure DOM is rendered
+    const timeoutId = requestAnimationFrame(() => {
+      extractHeadings();
+    });
 
     const observer = new MutationObserver(() => {
       extractHeadings();
@@ -55,8 +58,12 @@ export function useDocumentOutline(containerRef: React.RefObject<HTMLElement | n
       });
     }
 
-    return () => observer.disconnect();
-  }, [extractHeadings, containerRef]);
+    return () => {
+      cancelAnimationFrame(timeoutId);
+      observer.disconnect();
+    };
+  // content dependency ensures effect re-runs when document loads (containerRef is null during loading state)
+  }, [extractHeadings, containerRef, content]);
 
   useEffect(() => {
     const container = containerRef.current;

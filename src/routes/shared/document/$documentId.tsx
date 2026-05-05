@@ -22,7 +22,7 @@ function PublicDocumentView() {
 
   const [outlineOpen, setOutlineOpen] = useState(true);
   const contentContainerRef = useRef<HTMLDivElement>(null);
-  const { headings, activeId, scrollToHeading, minLevel } = useDocumentOutline(contentContainerRef);
+  const { headings, activeId, scrollToHeading, minLevel } = useDocumentOutline(contentContainerRef, document?.content);
 
   if (document === undefined) {
     return <LoadingSplash />;
