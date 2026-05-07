@@ -5,8 +5,9 @@ import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import { marked } from "marked";
 import TurndownService from "turndown";
-import { useEffect, useMemo } from "react";
+import { useEffect, useRef } from "react";
 import { cn } from "#/lib/utils";
+import { useDebouncedCallback } from "#/hooks/use-debounced-callback";
 import { BubbleMenuBar } from "./bubble-menu";
 import { SlashCommand } from "./slash-command";
 
@@ -32,10 +33,19 @@ export function RichEditor({
   className,
   autoFocus = false,
 }: RichEditorProps) {
-  const initialHtml = useMemo(() => {
-    if (!initialContent) return "";
-    return marked.parse(initialContent, { async: false }) as string;
-  }, [initialContent]);
+  const initialHtmlRef = useRef<string | null>(null);
+  if (initialHtmlRef.current === null) {
+    initialHtmlRef.current = initialContent
+      ? (marked.parse(initialContent, { async: false }) as string)
+      : "";
+  }
+
+  const debouncedOnChange = useDebouncedCallback((html: string) => {
+    if (onChange) {
+      const markdown = turndown.turndown(html);
+      onChange(markdown);
+    }
+  }, 1000);
 
   const editor = useEditor({
     extensions: [
@@ -50,7 +60,7 @@ export function RichEditor({
       Underline,
       SlashCommand,
     ],
-    content: initialHtml,
+    content: initialHtmlRef.current,
     editable,
     autofocus: autoFocus,
     editorProps: {
@@ -71,11 +81,7 @@ export function RichEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      if (onChange) {
-        const html = editor.getHTML();
-        const markdown = turndown.turndown(html);
-        onChange(markdown);
-      }
+      debouncedOnChange(editor.getHTML());
     },
   });
 
